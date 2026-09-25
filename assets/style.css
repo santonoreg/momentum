@@ -392,3 +392,22 @@ a { color: inherit; text-decoration: none; }
   color: var(--primary-deep);
 }
 .flash.error { background: var(--rose-soft); color: var(--rose); }
+
+/* ============ BMI μέσα στην κάρτα στόχου ============ */
+.hero { flex-wrap: wrap; container-type: inline-size; }
+.hero-side { min-width: 150px; }
+.hero-bmi {
+  flex: 1 1 210px;
+  min-width: 200px;
+  padding-left: 18px;
+  border-left: 1px solid var(--line);
+}
+.hero-bmi .gauge-svg { max-width: 220px; margin: 6px auto 0; }
+.hero-bmi .gauge-value { margin-top: -30px; }
+.hero-bmi .gauge-number { font-size: 26px; }
+.hero-bmi-meta { margin-top: 10px; font-size: 11.5px; color: var(--ink-soft); text-align: center; }
+.hero-bmi-meta b { color: var(--ink); font-weight: 600; }
+.hero.no-goal .hero-bmi { flex: none; width: 100%; padding: 12px 0 0; border-left: 0; border-top: 1px solid var(--line); }
+@container (max-width: 560px) {
+  .hero-bmi { flex-basis: 100%; padding: 14px 0 0; border-left: 0; border-top: 1px solid var(--line); }
+}

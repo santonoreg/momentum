@@ -73,9 +73,9 @@ function render_flash(): string
     if ($flash === null) {
         return '';
     }
-    $known = ['saved', 'deleted', 'token', 'error'];
+    $known = ['saved', 'deleted', 'token', 'error', 'badcode'];
     $key = in_array($flash, $known, true) ? $flash : 'saved';
-    return '<div class="flash ' . ($key === 'error' ? 'error' : '') . '">' . te('flash.' . $key) . '</div>';
+    return '<div class="flash ' . (in_array($key, ['error', 'badcode'], true) ? 'error' : '') . '">' . te('flash.' . $key) . '</div>';
 }
 
 /** Όλες οι καταχωρήσεις, ταξινομημένες κατά ημερομηνία (αύξουσα). */

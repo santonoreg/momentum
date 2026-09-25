@@ -24,6 +24,9 @@ function back(string $to, string $status = 'ok'): void
 
 switch ($action) {
     case 'save_entry': {
+        if (!varos_check_entry_code((string)($_POST['code'] ?? ''))) {
+            back($redirect, 'badcode');
+        }
         $date = trim($_POST['entry_date'] ?? '');
         $weightRaw = str_replace(',', '.', trim($_POST['weight'] ?? ''));
         $note = trim($_POST['note'] ?? '');
@@ -42,6 +45,9 @@ switch ($action) {
     }
 
     case 'delete_entry': {
+        if (!varos_check_entry_code((string)($_POST['code'] ?? ''))) {
+            back($redirect, 'badcode');
+        }
         $id = (int)($_POST['id'] ?? 0);
         if ($id > 0) {
             delete_entry($id);
@@ -77,6 +83,24 @@ switch ($action) {
         }
         varos_set_pref_cookie('varos_lang', $lang);
         varos_set_pref_cookie('varos_width', $width);
+        back($redirect, 'saved');
+        break;
+    }
+
+    case 'save_code': {
+        // Αλλαγή/αφαίρεση κωδικού: όταν υπάρχει ήδη κωδικός, ζητείται ο τρέχων.
+        if (!varos_check_entry_code((string)($_POST['current_code'] ?? ''))) {
+            back($redirect, 'badcode');
+        }
+        if (isset($_POST['remove'])) {
+            varos_set_entry_code(null);
+            back($redirect, 'saved');
+        }
+        $new = (string)($_POST['new_code'] ?? '');
+        if (mb_strlen($new) < 4 || mb_strlen($new) > 64) {
+            back($redirect, 'error');
+        }
+        varos_set_entry_code($new);
         back($redirect, 'saved');
         break;
     }

@@ -76,6 +76,9 @@ function varos_db(): PDO
     if (!in_array('api_token', $cols, true)) {
         $pdo->exec('ALTER TABLE settings ADD COLUMN api_token TEXT');
     }
+    if (!in_array('entry_code_hash', $cols, true)) {
+        $pdo->exec('ALTER TABLE settings ADD COLUMN entry_code_hash TEXT');
+    }
     if (!in_array('last_sync_at', $cols, true)) {
         $pdo->exec('ALTER TABLE settings ADD COLUMN last_sync_at TEXT');
     }
@@ -92,6 +95,32 @@ function varos_db(): PDO
     }
 
     return $pdo;
+}
+
+/** Έχει οριστεί κωδικός καταχώρισης; (αν όχι, η καταχώριση είναι ελεύθερη) */
+function varos_has_entry_code(): bool
+{
+    return (string)(varos_get_settings()['entry_code_hash'] ?? '') !== '';
+}
+
+/** Σωστός κωδικός; Επιστρέφει true και όταν δεν έχει οριστεί κωδικός. */
+function varos_check_entry_code(string $code): bool
+{
+    $hash = (string)(varos_get_settings()['entry_code_hash'] ?? '');
+    if ($hash === '') {
+        return true;
+    }
+    if (password_verify($code, $hash)) {
+        return true;
+    }
+    usleep(600000); // επιβράδυνση για να δυσκολεύει η δοκιμή πολλών κωδικών
+    return false;
+}
+
+function varos_set_entry_code(?string $code): void
+{
+    varos_db()->prepare('UPDATE settings SET entry_code_hash = :h WHERE id = 1')
+        ->execute([':h' => $code === null ? null : password_hash($code, PASSWORD_DEFAULT)]);
 }
 
 function varos_regenerate_token(): void

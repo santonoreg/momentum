@@ -100,6 +100,23 @@ require __DIR__ . '/includes/header.php';
 
 <?= render_flash() ?>
 
+<?php
+ob_start(); ?>
+    <div class="hero-bmi">
+      <div class="hero-label"><?= te('reports.bmi_title') ?></div>
+      <?php if ($bmi === null): ?>
+        <p style="margin:8px 0 0;font-size:13px;color:var(--ink-soft);"><?= t_html('reports.bmi_need_height', ['link' => '<a href="settings.php" style="color:var(--primary);font-weight:600;">' . te('reports.bmi_height_link') . '</a>']) ?></p>
+      <?php else: ?>
+        <div class="gauge-wrap"><?= bmi_gauge_svg($bmi) ?></div>
+        <div class="gauge-value">
+          <div class="gauge-number"><?= fmt_num($bmi) ?></div>
+          <div class="gauge-cat" style="color:<?= $bmiCat['color'] ?>"><?= e($bmiCat['label']) ?></div>
+        </div>
+        <div class="hero-bmi-meta"><?= te('bmi.low10') ?>: <b><?= fmt_num($low10) ?> <?= te('unit.kg_short') ?></b> · <?= te('bmi.height') ?>: <b><?= fmt_num($heightCm, 0) ?> <?= te('unit.cm_short') ?></b></div>
+      <?php endif; ?>
+    </div>
+<?php $bmiBlock = ob_get_clean(); ?>
+
 <?php if (!$entries): ?>
   <div class="card empty-state">
     <div class="big"><?= te('summary.empty_title') ?></div>
@@ -114,6 +131,7 @@ require __DIR__ . '/includes/header.php';
     </div>
     <p style="margin:0;color:var(--ink-soft);font-size:13.5px;"><?= te('hero.nogoal_text') ?></p>
     <a class="btn" href="settings.php"><?= te('hero.set_goal') ?></a>
+    <?= $bmiBlock ?>
   </div>
 
 <?php else:
@@ -140,6 +158,7 @@ require __DIR__ . '/includes/header.php';
       <div class="hero-milestone"><?= te('hero.milestone', ['n' => $settingsProgress['current_milestone'], 'total' => $settingsProgress['milestone_count']]) ?></div>
       <div class="hero-togo"><?= t_html('hero.togo', ['value' => '<b>' . e(fmt_num($settingsProgress['to_go']) . ' ' . t('unit.kg')) . '</b>']) ?></div>
     </div>
+    <?= $bmiBlock ?>
   </div>
 <?php endif; ?>
 
@@ -202,31 +221,6 @@ require __DIR__ . '/includes/header.php';
     </div>
   </div>
 <?php endif; ?>
-
-<div class="section-title"><?= te('reports.bmi_title') ?></div>
-<div class="bmi-card">
-  <?php if ($bmi === null): ?>
-    <div class="empty-state" style="padding:16px 4px 22px;">
-      <p style="margin:0;"><?= t_html('reports.bmi_need_height', ['link' => '<a href="settings.php" style="color:var(--primary);font-weight:600;">' . te('reports.bmi_height_link') . '</a>']) ?></p>
-    </div>
-  <?php else: ?>
-    <div class="gauge-wrap"><?= bmi_gauge_svg($bmi) ?></div>
-    <div class="gauge-value">
-      <div class="gauge-number"><?= fmt_num($bmi) ?></div>
-      <div class="gauge-cat" style="color:<?= $bmiCat['color'] ?>"><?= e($bmiCat['label']) ?></div>
-    </div>
-    <div class="bmi-meta">
-      <div>
-        <div class="l"><?= te('bmi.low10') ?></div>
-        <div class="v"><?= fmt_num($low10) ?> <?= te('unit.kg_short') ?></div>
-      </div>
-      <div>
-        <div class="l"><?= te('bmi.height') ?></div>
-        <div class="v"><?= fmt_num($heightCm, 0) ?> <?= te('unit.cm_short') ?></div>
-      </div>
-    </div>
-  <?php endif; ?>
-</div>
 
 <?php if ($heightCm): ?>
 <div class="card" style="margin-top:12px;">

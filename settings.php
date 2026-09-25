@@ -6,6 +6,7 @@ $settings = varos_get_settings();
 $entries = get_entries();
 $workoutCount = count_workouts();
 $stepDayCount = count_step_days();
+$hasCode = varos_has_entry_code();
 
 $endpoint = app_base_url() . '/api/health.php';
 $token = (string)($settings['api_token'] ?? '');
@@ -97,6 +98,30 @@ require __DIR__ . '/includes/header.php';
     </div>
   </form>
   <p class="hint"><?= te('prefs.hint') ?></p>
+</div>
+
+<div class="section-title"><?= te('code.title') ?></div>
+<div class="form-card">
+  <p class="para"><?= te($hasCode ? 'code.intro_on' : 'code.intro_off') ?></p>
+  <form method="post" action="actions.php">
+    <input type="hidden" name="action" value="save_code">
+    <input type="hidden" name="redirect" value="settings.php">
+    <?php if ($hasCode): ?>
+    <div class="field">
+      <label for="current_code"><?= te('code.current') ?></label>
+      <input type="password" id="current_code" name="current_code" autocomplete="off" required>
+    </div>
+    <?php endif; ?>
+    <div class="field">
+      <label for="new_code"><?= te('code.new') ?></label>
+      <input type="password" id="new_code" name="new_code" autocomplete="new-password" minlength="4" maxlength="64">
+    </div>
+    <div class="btn-row">
+      <button type="submit" class="btn"><?= te('code.save') ?></button>
+      <?php if ($hasCode): ?><button type="submit" name="remove" value="1" class="btn danger" formnovalidate><?= te('code.remove') ?></button><?php endif; ?>
+    </div>
+  </form>
+  <p class="hint"><?= te('code.hint') ?></p>
 </div>
 
 <div class="section-title" id="health"><?= te('health.title') ?></div>
