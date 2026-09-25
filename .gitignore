@@ -1,0 +1,4 @@
+# Προσωπικά δεδομένα — ποτέ στο repo
+data/*.db
+data/*.db-journal
+data/*.sqlite

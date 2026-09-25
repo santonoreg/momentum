@@ -1,0 +1,394 @@
+/* ============ Design tokens ============ */
+:root {
+  --bg: #EFF3F0;
+  --surface: #FFFFFF;
+  --surface-2: #E4EBE7;
+  --ink: #16231F;
+  --ink-soft: #52625B;
+  --ink-faint: #8A968F;
+  --line: #DCE4DF;
+
+  --primary: #1F6F5C;
+  --primary-soft: #DCEDE7;
+  --primary-deep: #164F42;
+
+  --gold: #B4842A;
+  --gold-soft: #F5E9CE;
+
+  --rose: #A84448;
+  --rose-soft: #F3DEDD;
+
+  --cat-under: #7C93A8;
+  --cat-normal: #1F6F5C;
+  --cat-over: #B4842A;
+  --cat-obese1: #C1732E;
+  --cat-obese2: #A84448;
+  --cat-obese3: #7A3040;
+
+  --radius-lg: 22px;
+  --radius-md: 14px;
+  --radius-sm: 10px;
+  --shadow: 0 1px 2px rgba(22,35,31,.05), 0 6px 18px rgba(22,35,31,.07);
+
+  --font-display: 'Noto Serif', Georgia, serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  --app-max: 480px; /* πλάτος εφαρμογής: narrow */
+}
+/* Επιλογή πλάτους από τις Ρυθμίσεις (cookie -> data-width στο <html>) */
+html[data-width="wide"] { --app-max: 760px; }
+html[data-width="wider"] { --app-max: 1080px; }
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+a { color: inherit; text-decoration: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+}
+
+/* ============ App shell ============ */
+.app {
+  max-width: var(--app-max);
+  margin: 0 auto;
+  min-height: 100vh;
+  position: relative;
+  background: var(--bg);
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 18px 20px 14px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+.topbar-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 21px;
+  letter-spacing: .2px;
+}
+.topbar-date {
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.content {
+  padding: 18px 16px 110px;
+}
+
+.tabbar {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 10;
+  display: flex;
+  max-width: var(--app-max);
+  margin: 0 auto;
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+.tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 4px 8px;
+  color: var(--ink-faint);
+  font-size: 11px;
+  font-weight: 500;
+}
+.tab-icon { width: 22px; height: 22px; }
+.tab.is-active { color: var(--primary); }
+
+/* ============ Sections & headings ============ */
+.section-title {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 26px 2px 10px;
+}
+.section-title:first-child { margin-top: 2px; }
+
+/* ============ Hero progress card ============ */
+.hero {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 22px 20px 20px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.ring-wrap { position: relative; width: 128px; height: 128px; flex: none; }
+.ring-wrap svg { transform: rotate(-90deg); }
+.ring-track { stroke: var(--surface-2); }
+.ring-progress { stroke: var(--primary); stroke-linecap: round; transition: stroke-dashoffset .6s ease; }
+.ring-center {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.ring-value { font-family: var(--font-display); font-size: 25px; font-weight: 700; line-height: 1; }
+.ring-unit { font-size: 11px; color: var(--ink-faint); margin-top: 3px; }
+
+.hero-side { flex: 1; min-width: 0; }
+.hero-label { font-size: 12px; color: var(--ink-soft); }
+.hero-goal { font-family: var(--font-display); font-size: 17px; font-weight: 600; margin: 2px 0 10px; }
+.hero-milestone {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--gold-soft); color: var(--gold);
+  border-radius: 999px; padding: 5px 11px;
+  font-size: 12.5px; font-weight: 600;
+}
+.hero-togo { margin-top: 10px; font-size: 12.5px; color: var(--ink-soft); }
+.hero-togo b { color: var(--ink); font-weight: 600; }
+
+.hero.no-goal { flex-direction: column; align-items: flex-start; gap: 10px; }
+.hero.no-goal .btn { align-self: flex-start; }
+
+/* ============ Stat chips ============ */
+.chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip {
+  flex: 1;
+  min-width: 74px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 11px 8px;
+  text-align: center;
+}
+.chip-value { font-family: var(--font-display); font-size: 17px; font-weight: 700; }
+.chip-value.pos { color: var(--primary); }
+.chip-value.neg { color: var(--rose); }
+.chip-label { font-size: 10.5px; color: var(--ink-soft); margin-top: 3px; }
+
+/* ============ Mini trend card ============ */
+.card {
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
+  padding: 16px 16px 10px;
+}
+.card-head {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 6px;
+}
+.card-head h3 { font-family: var(--font-body); font-size: 13px; font-weight: 600; color: var(--ink-soft); margin: 0; text-transform: none; }
+.card-head .mini-stats { display: flex; gap: 14px; font-size: 11.5px; color: var(--ink-faint); }
+.card-head .mini-stats b { color: var(--ink); font-weight: 600; }
+.chart-holder { height: 150px; }
+
+.trend-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin: 2px 0 14px;
+}
+.trend-stats .ts { text-align: left; }
+.trend-stats .ts-value { font-family: var(--font-display); font-size: 15px; font-weight: 700; }
+.trend-stats .ts-value.hi { color: var(--rose); }
+.trend-stats .ts-value.lo { color: var(--primary); }
+.trend-stats .ts-label { font-size: 10.5px; color: var(--ink-faint); margin-top: 1px; }
+.trend-stats .ts-sub { font-size: 9.5px; color: var(--ink-faint); }
+
+/* ============ Range switch (reports page) ============ */
+.range-switch { display: flex; gap: 6px; margin-bottom: 12px; }
+.range-switch a {
+  flex: 1; text-align: center;
+  padding: 7px 0;
+  border-radius: 999px;
+  font-size: 12.5px; font-weight: 500;
+  color: var(--ink-soft);
+  border: 1px solid var(--line);
+}
+.range-switch a.is-active { background: var(--primary); border-color: var(--primary); color: #fff; font-weight: 600; }
+
+/* ============ BMI gauge ============ */
+.bmi-card { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow); padding: 20px 20px 6px; }
+.gauge-wrap { display: flex; justify-content: center; }
+.gauge-svg { width: 100%; max-width: 300px; height: auto; display: block; }
+.gauge-value { text-align: center; margin-top: -34px; }
+.gauge-number { font-family: var(--font-display); font-size: 30px; font-weight: 700; }
+.gauge-cat { font-size: 13px; font-weight: 600; margin-top: 2px; }
+.bmi-meta {
+  display: flex; justify-content: space-between;
+  margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line);
+  padding-bottom: 14px;
+}
+.bmi-meta div { flex: 1; }
+.bmi-meta .l { font-size: 11.5px; color: var(--ink-soft); }
+.bmi-meta .v { font-family: var(--font-display); font-size: 16px; font-weight: 600; margin-top: 2px; }
+
+.cat-table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+.cat-table td { padding: 9px 2px; font-size: 13px; border-top: 1px solid var(--line); }
+.cat-table tr:first-child td { border-top: none; }
+.cat-table td:last-child { text-align: right; color: var(--ink-soft); }
+.cat-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 8px; }
+
+/* ============ Forms ============ */
+.form-card { background: var(--surface); border-radius: var(--radius-md); box-shadow: var(--shadow); padding: 16px; }
+.field { margin-bottom: 14px; }
+.field:last-child { margin-bottom: 0; }
+.field label { display: block; font-size: 12.5px; color: var(--ink-soft); margin-bottom: 5px; }
+.field input, .field select, .field textarea {
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 15px;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--ink);
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+.field-row { display: flex; gap: 10px; }
+.field-row .field { flex: 1; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 12px 18px;
+  font-family: var(--font-body);
+  font-size: 14.5px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+}
+.btn:active { background: var(--primary-deep); }
+.btn.secondary { background: var(--surface-2); color: var(--ink); }
+.btn.danger { background: var(--rose-soft); color: var(--rose); }
+.btn-row { display: flex; gap: 8px; margin-top: 14px; }
+.btn-row .btn { width: auto; flex: 1; }
+
+/* ============ Logbook list ============ */
+.log-list { background: var(--surface); border-radius: var(--radius-md); box-shadow: var(--shadow); overflow: hidden; }
+.log-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 13px 16px;
+  border-top: 1px solid var(--line);
+}
+.log-row:first-child { border-top: none; }
+.log-date { font-size: 13px; color: var(--ink-soft); }
+.log-weight { font-family: var(--font-display); font-size: 16px; font-weight: 600; }
+.log-note { font-size: 12px; color: var(--ink-faint); margin-top: 2px; }
+.log-actions { display: flex; gap: 6px; }
+.icon-btn {
+  width: 30px; height: 30px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 8px;
+  color: var(--ink-faint);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+.icon-btn:hover { background: var(--surface-2); color: var(--ink); }
+.icon-btn svg { width: 16px; height: 16px; }
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--ink-soft);
+}
+.empty-state .big { font-family: var(--font-display); font-size: 17px; color: var(--ink); margin-bottom: 6px; }
+
+.badge-today {
+  font-size: 10px; font-weight: 600;
+  color: var(--primary); background: var(--primary-soft);
+  border-radius: 999px; padding: 2px 7px; margin-left: 7px;
+  vertical-align: middle;
+}
+
+.modal-backdrop {
+  position: fixed; inset: 0; background: rgba(22,35,31,.35);
+  display: none; align-items: flex-end; justify-content: center;
+  z-index: 20;
+}
+.modal-backdrop.is-open { display: flex; }
+.modal-sheet {
+  background: var(--surface);
+  width: 100%; max-width: var(--app-max);
+  border-radius: 20px 20px 0 0;
+  padding: 20px 16px calc(20px + env(safe-area-inset-bottom, 0));
+}
+.modal-sheet h3 { font-family: var(--font-display); margin: 0 0 14px; font-size: 17px; }
+
+.hint { font-size: 12px; color: var(--ink-faint); margin-top: 8px; }
+
+/* ============ Floating action button ============ */
+.fab {
+  position: fixed;
+  right: 18px;
+  bottom: calc(78px + env(safe-area-inset-bottom, 0));
+  z-index: 8;
+  width: 54px; height: 54px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 6px 16px rgba(31,111,92,.35);
+  border: none;
+  cursor: pointer;
+}
+.fab svg { width: 24px; height: 24px; }
+/* Το κουμπί «+» ακολουθεί το δεξί άκρο της στήλης, όποιο κι αν είναι το πλάτος. */
+.fab { right: max(18px, calc(50% - var(--app-max) / 2 + 18px)); }
+
+/* ============ Άσκηση ============ */
+.wk-metrics { text-align: right; }
+.wk-duration { font-family: var(--font-display); font-size: 16px; font-weight: 600; }
+.wk-sub { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+
+/* ============ Ρυθμίσεις: Apple Health ============ */
+.para { margin: 0 0 14px; font-size: 13.5px; color: var(--ink-soft); }
+.copy-row { display: flex; gap: 8px; align-items: stretch; }
+.copy-row code {
+  flex: 1; min-width: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  padding: 11px 12px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+.copy-row .btn { width: auto; flex: none; padding: 0 14px; }
+.steps { margin: 0; padding-left: 20px; font-size: 13.5px; color: var(--ink-soft); }
+.steps li { margin-bottom: 6px; }
+
+@media (min-width: 900px) {
+  html[data-width="wider"] .chart-holder { height: 220px; }
+}
+
+.flash {
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-bottom: 14px;
+  background: var(--primary-soft);
+  color: var(--primary-deep);
+}
+.flash.error { background: var(--rose-soft); color: var(--rose); }

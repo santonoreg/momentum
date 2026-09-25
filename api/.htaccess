@@ -1,0 +1,2 @@
+# Κάποιες ρυθμίσεις Apache/FastCGI δεν περνούν την κεφαλίδα Authorization στο PHP.
+SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
