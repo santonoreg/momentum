@@ -8,6 +8,12 @@ $pageTitle = $pageTitle ?? t('app.name');
 $activeTab = $activeTab ?? 'reports';
 $needsChart = $needsChart ?? false;
 
+// Χωρίς κωδικό καταχώρισης η εφαρμογή δεν λειτουργεί: πρώτα γίνεται η αρχική ρύθμιση.
+if ($activeTab !== 'setup' && !varos_has_entry_code()) {
+    header('Location: setup.php');
+    exit;
+}
+
 $__headerToday = new DateTime('now');
 $__dayName = t('day.' . (int)$__headerToday->format('w'));
 ?>

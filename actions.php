@@ -22,11 +22,37 @@ function back(string $to, string $status = 'ok'): void
     exit;
 }
 
+// Πριν οριστεί κωδικός επιτρέπεται μόνο η αρχική ρύθμιση (και οι προτιμήσεις εμφάνισης).
+if (!varos_has_entry_code() && !in_array($action, ['setup_code', 'save_prefs'], true)) {
+    header('Location: setup.php');
+    exit;
+}
+
+/** Ελέγχει τον κωδικό της φόρμας· αλλιώς επιστρέφει με μήνυμα λάθους. */
+function require_code(string $redirect, string $field = 'code'): void
+{
+    if (!varos_check_entry_code((string)($_POST[$field] ?? ''))) {
+        back($redirect, 'badcode');
+    }
+}
+
 switch ($action) {
-    case 'save_entry': {
-        if (!varos_check_entry_code((string)($_POST['code'] ?? ''))) {
-            back($redirect, 'badcode');
+    case 'setup_code': {
+        // Αρχική ρύθμιση: επιτρέπεται μόνο όσο δεν υπάρχει κωδικός.
+        if (varos_has_entry_code()) {
+            back('reports.php', 'error');
         }
+        $new = (string)($_POST['new_code'] ?? '');
+        if (strlen($new) < 4 || strlen($new) > 64 || $new !== (string)($_POST['confirm_code'] ?? '')) {
+            back('setup.php', 'error');
+        }
+        varos_set_entry_code($new);
+        back('reports.php', 'saved');
+        break;
+    }
+
+    case 'save_entry': {
+        require_code($redirect);
         $date = trim($_POST['entry_date'] ?? '');
         $weightRaw = str_replace(',', '.', trim($_POST['weight'] ?? ''));
         $note = trim($_POST['note'] ?? '');
@@ -45,9 +71,7 @@ switch ($action) {
     }
 
     case 'delete_entry': {
-        if (!varos_check_entry_code((string)($_POST['code'] ?? ''))) {
-            back($redirect, 'badcode');
-        }
+        require_code($redirect);
         $id = (int)($_POST['id'] ?? 0);
         if ($id > 0) {
             delete_entry($id);
@@ -57,6 +81,7 @@ switch ($action) {
     }
 
     case 'save_settings': {
+        require_code($redirect);
         $heightRaw = str_replace(',', '.', trim($_POST['height_cm'] ?? ''));
         $startRaw = str_replace(',', '.', trim($_POST['start_weight'] ?? ''));
         $goalRaw = str_replace(',', '.', trim($_POST['goal_weight'] ?? ''));
@@ -88,16 +113,10 @@ switch ($action) {
     }
 
     case 'save_code': {
-        // Αλλαγή/αφαίρεση κωδικού: όταν υπάρχει ήδη κωδικός, ζητείται ο τρέχων.
-        if (!varos_check_entry_code((string)($_POST['current_code'] ?? ''))) {
-            back($redirect, 'badcode');
-        }
-        if (isset($_POST['remove'])) {
-            varos_set_entry_code(null);
-            back($redirect, 'saved');
-        }
+        // Αλλαγή κωδικού: απαιτείται ο τρέχων.
+        require_code($redirect, 'current_code');
         $new = (string)($_POST['new_code'] ?? '');
-        if (mb_strlen($new) < 4 || mb_strlen($new) > 64) {
+        if (strlen($new) < 4 || strlen($new) > 64) {
             back($redirect, 'error');
         }
         varos_set_entry_code($new);
@@ -106,6 +125,7 @@ switch ($action) {
     }
 
     case 'regen_token': {
+        require_code($redirect);
         varos_regenerate_token();
         back($redirect, 'token');
         break;

@@ -6,7 +6,13 @@ $settings = varos_get_settings();
 $entries = get_entries();
 $workoutCount = count_workouts();
 $stepDayCount = count_step_days();
-$hasCode = varos_has_entry_code();
+// Το κλειδί API εμφανίζεται μόνο μετά από σωστό κωδικό.
+$revealToken = false;
+$badCode = false;
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['reveal'])) {
+    $revealToken = varos_check_entry_code((string)($_POST['code'] ?? ''));
+    $badCode = !$revealToken;
+}
 
 $endpoint = app_base_url() . '/api/health.php';
 $token = (string)($settings['api_token'] ?? '');
@@ -21,6 +27,7 @@ require __DIR__ . '/includes/header.php';
 ?>
 
 <?= render_flash() ?>
+<?php if ($badCode): ?><div class="flash error"><?= te('flash.badcode') ?></div><?php endif; ?>
 
 <div class="section-title"><?= te('settings.goal_title') ?></div>
 <div class="form-card">
@@ -63,6 +70,11 @@ require __DIR__ . '/includes/header.php';
              value="<?= e($settings['start_date'] ?? ($entries ? $entries[0]['entry_date'] : date('Y-m-d'))) ?>">
     </div>
 
+    <div class="field">
+      <label for="goal_code"><?= te('code.field') ?></label>
+      <input type="password" id="goal_code" name="code" autocomplete="off" required>
+    </div>
+
     <div class="btn-row">
       <button type="submit" class="btn"><?= te('settings.save') ?></button>
     </div>
@@ -102,23 +114,20 @@ require __DIR__ . '/includes/header.php';
 
 <div class="section-title"><?= te('code.title') ?></div>
 <div class="form-card">
-  <p class="para"><?= te($hasCode ? 'code.intro_on' : 'code.intro_off') ?></p>
+  <p class="para"><?= te('code.intro_on') ?></p>
   <form method="post" action="actions.php">
     <input type="hidden" name="action" value="save_code">
     <input type="hidden" name="redirect" value="settings.php">
-    <?php if ($hasCode): ?>
     <div class="field">
       <label for="current_code"><?= te('code.current') ?></label>
       <input type="password" id="current_code" name="current_code" autocomplete="off" required>
     </div>
-    <?php endif; ?>
     <div class="field">
       <label for="new_code"><?= te('code.new') ?></label>
-      <input type="password" id="new_code" name="new_code" autocomplete="new-password" minlength="4" maxlength="64">
+      <input type="password" id="new_code" name="new_code" autocomplete="new-password" minlength="4" maxlength="64" required>
     </div>
     <div class="btn-row">
       <button type="submit" class="btn"><?= te('code.save') ?></button>
-      <?php if ($hasCode): ?><button type="submit" name="remove" value="1" class="btn danger" formnovalidate><?= te('code.remove') ?></button><?php endif; ?>
     </div>
   </form>
   <p class="hint"><?= te('code.hint') ?></p>
@@ -137,15 +146,27 @@ require __DIR__ . '/includes/header.php';
   </div>
   <div class="field">
     <label><?= te('health.token') ?></label>
+    <?php if ($revealToken): ?>
     <div class="copy-row">
       <code><?= e($token) ?></code>
       <button type="button" class="btn secondary" data-copy="<?= e($token) ?>" data-copied="<?= te('btn.copied') ?>"><?= te('btn.copy') ?></button>
     </div>
+    <?php else: ?>
+    <form method="post" action="settings.php#health" data-needs-code="<?= te('code.prompt') ?>">
+      <input type="hidden" name="reveal" value="1">
+      <input type="hidden" name="code" value="">
+      <div class="copy-row">
+        <code>••••••••••••••••••••</code>
+        <button type="submit" class="btn secondary"><?= te('token.show') ?></button>
+      </div>
+    </form>
+    <?php endif; ?>
   </div>
   <?php if (!$isHttps): ?><p class="hint"><?= te('health.https_warn') ?></p><?php endif; ?>
 
-  <form method="post" action="actions.php" data-confirm="<?= te('health.confirm_regen') ?>">
+  <form method="post" action="actions.php" data-confirm="<?= te('health.confirm_regen') ?>" data-needs-code="<?= te('code.prompt') ?>">
     <input type="hidden" name="action" value="regen_token">
+    <input type="hidden" name="code" value="">
     <input type="hidden" name="redirect" value="settings.php">
     <div class="btn-row">
       <button type="submit" class="btn danger"><?= te('health.regen') ?></button>

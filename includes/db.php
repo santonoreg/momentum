@@ -103,12 +103,12 @@ function varos_has_entry_code(): bool
     return (string)(varos_get_settings()['entry_code_hash'] ?? '') !== '';
 }
 
-/** Σωστός κωδικός; Επιστρέφει true και όταν δεν έχει οριστεί κωδικός. */
+/** Σωστός κωδικός; Αν δεν έχει οριστεί κωδικός δεν γίνεται δεκτή καμία τιμή (πρώτα γίνεται η αρχική ρύθμιση). */
 function varos_check_entry_code(string $code): bool
 {
     $hash = (string)(varos_get_settings()['entry_code_hash'] ?? '');
     if ($hash === '') {
-        return true;
+        return false;
     }
     if (password_verify($code, $hash)) {
         return true;

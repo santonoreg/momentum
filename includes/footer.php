@@ -1,5 +1,6 @@
   </main>
 
+<?php if ($activeTab !== 'setup'): ?>
   <nav class="tabbar">
     <a href="reports.php" class="tab <?= $activeTab === 'reports' ? 'is-active' : '' ?>">
       <svg viewBox="0 0 24 24" class="tab-icon"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -18,6 +19,7 @@
       <span><?= te('nav.settings') ?></span>
     </a>
   </nav>
+<?php endif; ?>
 </div>
 <?php $__jsV = @filemtime(__DIR__ . '/../assets/app.js') ?: time(); ?>
 <script src="assets/app.js?v=<?= $__jsV ?>"></script>

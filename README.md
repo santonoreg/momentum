@@ -15,6 +15,17 @@ Plain PHP 8 + SQLite — no build step, no dependencies to install.
 - **Languages** – Greek and English (auto-detected, switchable in Settings)
 - **Layout width** – *narrow*, *wide* or *wider* (Settings → Appearance)
 
+## Entry code
+
+On first visit the app asks you to set an **entry code** (setup screen). Until it is set nothing else works,
+so set it right after deploying — whoever opens the page first can set it.
+The code is required to add/edit/delete weight, change the goal, change the code, and to reveal or
+regenerate the Apple Health key. Viewing the pages is not protected. To reset a forgotten code:
+
+```bash
+sqlite3 data/varos.db "UPDATE settings SET entry_code_hash = NULL;"
+```
+
 ## Requirements
 
 - PHP 8.1+ with the `pdo_sqlite` extension
