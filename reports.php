@@ -100,6 +100,49 @@ require __DIR__ . '/includes/header.php';
 
 <?= render_flash() ?>
 
+<?php if (!$entries): ?>
+  <div class="card empty-state">
+    <div class="big"><?= te('summary.empty_title') ?></div>
+    <p><?= te('summary.empty_text') ?></p>
+  </div>
+
+<?php elseif (!$settingsProgress['has_goal']): ?>
+  <div class="hero no-goal">
+    <div>
+      <div class="hero-label"><?= te('hero.current') ?></div>
+      <div class="ring-value" style="font-size:34px;"><?= fmt_num($settingsProgress['current_weight']) ?> <span style="font-size:15px;font-family:var(--font-body);color:var(--ink-soft);"><?= te('unit.kg') ?></span></div>
+    </div>
+    <p style="margin:0;color:var(--ink-soft);font-size:13.5px;"><?= te('hero.nogoal_text') ?></p>
+    <a class="btn" href="settings.php"><?= te('hero.set_goal') ?></a>
+  </div>
+
+<?php else:
+  $radius = 54; $circumference = 2 * M_PI * $radius;
+  $pct = $settingsProgress['percent_complete'];
+  $offset = $circumference * (1 - $pct / 100);
+  $goalLabel = $direction < 0 ? t('hero.goal_loss') : ($direction > 0 ? t('hero.goal_gain') : t('hero.goal'));
+?>
+  <div class="hero">
+    <div class="ring-wrap">
+      <svg viewBox="0 0 128 128" width="128" height="128">
+        <circle class="ring-track" cx="64" cy="64" r="<?= $radius ?>" fill="none" stroke-width="12"/>
+        <circle class="ring-progress" cx="64" cy="64" r="<?= $radius ?>" fill="none" stroke-width="12"
+                stroke-dasharray="<?= $circumference ?>" stroke-dashoffset="<?= $offset ?>"/>
+      </svg>
+      <div class="ring-center">
+        <div class="ring-value"><?= fmt_num($settingsProgress['current_weight']) ?></div>
+        <div class="ring-unit"><?= te('unit.kg') ?> · <?= (int)round($pct) ?>%</div>
+      </div>
+    </div>
+    <div class="hero-side">
+      <div class="hero-label"><?= e($goalLabel) ?></div>
+      <div class="hero-goal"><?= fmt_num($settingsProgress['goal_weight']) ?> <?= te('unit.kg') ?></div>
+      <div class="hero-milestone"><?= te('hero.milestone', ['n' => $settingsProgress['current_milestone'], 'total' => $settingsProgress['milestone_count']]) ?></div>
+      <div class="hero-togo"><?= t_html('hero.togo', ['value' => '<b>' . e(fmt_num($settingsProgress['to_go']) . ' ' . t('unit.kg')) . '</b>']) ?></div>
+    </div>
+  </div>
+<?php endif; ?>
+
 <div class="section-title"><?= te('reports.chart_title') ?></div>
 <div class="range-switch">
   <?php foreach ($metrics as $key => $label): ?>

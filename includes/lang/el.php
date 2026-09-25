@@ -61,6 +61,16 @@ return [
     'log.confirm_delete' => 'Διαγραφή της καταχώρησης της {date};',
 
     // Στατιστικά
+    'summary.empty_title' => 'Ξεκίνα την καταγραφή',
+    'summary.empty_text' => 'Πρόσθεσε τη σημερινή σου ζύγιση για να ξεκινήσει η παρακολούθηση της προόδου σου.',
+    'hero.current' => 'Τρέχον βάρος',
+    'hero.nogoal_text' => 'Όρισε αρχικό βάρος, στόχο και ύψος για να δεις πρόοδο, ορόσημα και τον δείκτη BMI.',
+    'hero.set_goal' => 'Ρύθμιση στόχου',
+    'hero.goal_loss' => 'Στόχος απώλειας',
+    'hero.goal_gain' => 'Στόχος πρόσληψης',
+    'hero.goal' => 'Στόχος',
+    'hero.milestone' => 'Ορόσημο {n} από {total}',
+    'hero.togo' => 'Απομένουν {value} ως τον στόχο',
     'reports.metric_weight' => 'Βάρος',
     'reports.metric_steps' => 'Βήματα',
     'reports.metric_both' => 'Βάρος + βήματα',
