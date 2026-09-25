@@ -2,3 +2,6 @@
 data/*.db
 data/*.db-journal
 data/*.sqlite
+
+# Καταγραφή συγχρονισμού
+data/sync.log

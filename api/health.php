@@ -4,17 +4,71 @@ declare(strict_types=1);
 /**
  * Endpoint συγχρονισμού Apple Health.
  * POST JSON με προπονήσεις + κλειδί πρόσβασης (Authorization: Bearer <token>, X-API-Key ή ?token=).
+ * Κάθε αίτημα καταγράφεται στο data/sync.log (τα τελευταία 30) για διάγνωση προβλημάτων.
  */
 require_once __DIR__ . '/../includes/functions.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 
+$GLOBALS['sync_note'] = '';
+
+function sync_log(int $code, array $data): void
+{
+    try {
+        $file = __DIR__ . '/../data/sync.log';
+        $keys = [];
+        $raw = $GLOBALS['sync_raw'] ?? '';
+        $json = $raw !== '' ? json_decode($raw, true) : null;
+        if (is_array($json)) {
+            $keys = array_slice(array_keys($json), 0, 8);
+            if (isset($json['data']) && is_array($json['data'])) {
+                $keys = array_merge($keys, array_map(fn($k) => 'data.' . $k, array_slice(array_keys($json['data']), 0, 8)));
+            }
+        }
+        $line = json_encode([
+            'time' => date('Y-m-d H:i:s'),
+            'http' => $code,
+            'result' => $data,
+            'note' => $GLOBALS['sync_note'],
+            'body_bytes' => strlen($raw),
+            'top_keys' => $keys,
+            'body_start' => mb_substr($raw, 0, 400),
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $lines = is_file($file) ? file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) : [];
+        $lines[] = $line;
+        file_put_contents($file, implode("\n", array_slice($lines, -30)) . "\n", LOCK_EX);
+    } catch (Throwable $e) {
+        // Η καταγραφή δεν πρέπει ποτέ να χαλάει την απάντηση.
+    }
+}
+
 function api_out(int $code, array $data): void
 {
+    sync_log($code, $data);
     http_response_code($code);
     echo json_encode($data, JSON_UNESCAPED_UNICODE);
     exit;
+}
+
+/** Τιμή κεφαλίδας — με fallback για ρυθμίσεις (nginx/FPM) που δεν την περνούν στο $_SERVER. */
+function request_header(string $name): string
+{
+    $key = 'HTTP_' . strtoupper(str_replace('-', '_', $name));
+    if (!empty($_SERVER[$key])) {
+        return (string)$_SERVER[$key];
+    }
+    if ($name === 'Authorization' && !empty($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+        return (string)$_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
+    }
+    if (function_exists('getallheaders')) {
+        foreach (getallheaders() as $k => $v) {
+            if (strcasecmp((string)$k, $name) === 0) {
+                return (string)$v;
+            }
+        }
+    }
+    return '';
 }
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
@@ -22,22 +76,24 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
     api_out(405, ['ok' => false, 'error' => 'Use POST']);
 }
 
+$raw = file_get_contents('php://input', false, null, 0, 8 * 1024 * 1024 + 1);
+$GLOBALS['sync_raw'] = $raw === false ? '' : $raw;
+
 $given = '';
-$auth = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '';
-if (preg_match('/^Bearer\s+(\S+)/i', $auth, $m)) {
+if (preg_match('/^Bearer\s+(\S+)/i', request_header('Authorization'), $m)) {
     $given = $m[1];
-} elseif (!empty($_SERVER['HTTP_X_API_KEY'])) {
-    $given = (string)$_SERVER['HTTP_X_API_KEY'];
+} elseif (request_header('X-API-Key') !== '') {
+    $given = request_header('X-API-Key');
 } elseif (!empty($_GET['token'])) {
     $given = (string)$_GET['token'];
 }
 
 $expected = (string)(varos_get_settings()['api_token'] ?? '');
 if ($expected === '' || !hash_equals($expected, $given)) {
+    $GLOBALS['sync_note'] = $given === '' ? 'no token received (Authorization header missing/stripped?)' : 'wrong token';
     api_out(401, ['ok' => false, 'error' => 'Invalid or missing token']);
 }
 
-$raw = file_get_contents('php://input', false, null, 0, 8 * 1024 * 1024 + 1);
 if ($raw === false || $raw === '' || strlen($raw) > 8 * 1024 * 1024) {
     api_out(400, ['ok' => false, 'error' => 'Empty or too large body']);
 }
@@ -47,6 +103,9 @@ if (!is_array($json)) {
 }
 
 $workouts = parse_health_payload($json);
+if (!$workouts) {
+    $GLOBALS['sync_note'] = 'authenticated, but no workouts found in payload (wrong data type selected in the app?)';
+}
 
 $pdo = varos_db();
 $pdo->beginTransaction();
@@ -58,6 +117,7 @@ try {
     $pdo->commit();
 } catch (Throwable $ex) {
     $pdo->rollBack();
+    $GLOBALS['sync_note'] = 'db error: ' . $ex->getMessage();
     api_out(500, ['ok' => false, 'error' => 'Could not store workouts']);
 }
 
