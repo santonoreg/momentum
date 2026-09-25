@@ -28,7 +28,7 @@ if (!varos_has_entry_code() && !in_array($action, ['setup_code', 'save_prefs'], 
     exit;
 }
 
-/** Ελέγχει τον κωδικό της φόρμας· αλλιώς επιστρέφει με μήνυμα λάθους. */
+/** Ελέγχει τον κωδικό που πληκτρολογήθηκε· αλλιώς επιστρέφει με μήνυμα λάθους. */
 function require_code(string $redirect, string $field = 'code'): void
 {
     if (!varos_check_entry_code((string)($_POST[$field] ?? ''))) {
@@ -47,12 +47,28 @@ switch ($action) {
             back('setup.php', 'error');
         }
         varos_set_entry_code($new);
+        varos_login();
         back('reports.php', 'saved');
         break;
     }
 
+    case 'login': {
+        if (!varos_check_entry_code((string)($_POST['password'] ?? ''))) {
+            back('login.php?redirect=' . urlencode($redirect), 'badcode');
+        }
+        varos_login();
+        header('Location: ' . $redirect);
+        exit;
+    }
+
+    case 'logout': {
+        varos_logout();
+        header('Location: reports.php');
+        exit;
+    }
+
     case 'save_entry': {
-        require_code($redirect);
+        varos_require_admin($redirect);
         $date = trim($_POST['entry_date'] ?? '');
         $weightRaw = str_replace(',', '.', trim($_POST['weight'] ?? ''));
         $note = trim($_POST['note'] ?? '');
@@ -71,7 +87,7 @@ switch ($action) {
     }
 
     case 'delete_entry': {
-        require_code($redirect);
+        varos_require_admin($redirect);
         $id = (int)($_POST['id'] ?? 0);
         if ($id > 0) {
             delete_entry($id);
@@ -81,7 +97,7 @@ switch ($action) {
     }
 
     case 'save_settings': {
-        require_code($redirect);
+        varos_require_admin($redirect);
         $heightRaw = str_replace(',', '.', trim($_POST['height_cm'] ?? ''));
         $startRaw = str_replace(',', '.', trim($_POST['start_weight'] ?? ''));
         $goalRaw = str_replace(',', '.', trim($_POST['goal_weight'] ?? ''));
@@ -113,7 +129,8 @@ switch ($action) {
     }
 
     case 'save_code': {
-        // Αλλαγή κωδικού: απαιτείται ο τρέχων.
+        // Αλλαγή κωδικού: απαιτείται σύνδεση και ο τρέχων κωδικός.
+        varos_require_admin($redirect);
         require_code($redirect, 'current_code');
         $new = (string)($_POST['new_code'] ?? '');
         if (strlen($new) < 4 || strlen($new) > 64) {
@@ -125,7 +142,7 @@ switch ($action) {
     }
 
     case 'regen_token': {
-        require_code($redirect);
+        varos_require_admin($redirect);
         varos_regenerate_token();
         back($redirect, 'token');
         break;

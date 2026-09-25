@@ -10,6 +10,9 @@ date_default_timezone_set(getenv('VAROS_TZ') ?: 'Europe/Athens');
 require_once __DIR__ . '/i18n.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/workouts.php';
+require_once __DIR__ . '/auth.php';
+
+varos_session_start();
 
 /** Μορφοποίηση βάρους σε κιλά, 1 δεκαδικό. */
 function fmt_kg(?float $w): string

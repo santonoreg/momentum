@@ -75,16 +75,6 @@
         return;
       }
     }
-    // Φόρμες που απαιτούν κωδικό καταχώρισης (π.χ. διαγραφή): ζητάμε τον κωδικό πριν την αποστολή
-    if (e.target.hasAttribute && e.target.hasAttribute('data-needs-code')) {
-      var code = window.prompt(e.target.getAttribute('data-needs-code'));
-      if (code === null) {
-        e.preventDefault();
-        return;
-      }
-      var field = e.target.querySelector('[name="code"]');
-      if (field) field.value = code;
-    }
   });
 
   // ---------- Chart.js: κοινά χρώματα ----------

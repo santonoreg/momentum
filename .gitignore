@@ -5,3 +5,4 @@ data/*.sqlite
 
 # Καταγραφή συγχρονισμού
 data/sync.log
+data/sessions/

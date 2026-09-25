@@ -5,6 +5,7 @@
  * @var string $today          σημερινή ημερομηνία (Y-m-d)
  */
 ?>
+<?php if (varos_is_admin()): ?>
 <button class="fab" data-open-modal="entry-modal" aria-label="<?= te('entry.new') ?>">
   <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
 </button>
@@ -29,12 +30,6 @@
         <label for="note"><?= te('entry.note') ?></label>
         <input type="text" id="note" name="note" placeholder="<?= te('entry.note_ph') ?>">
       </div>
-      <?php if (varos_has_entry_code()): ?>
-      <div class="field">
-        <label for="code"><?= te('code.field') ?></label>
-        <input type="password" id="code" name="code" autocomplete="off" required>
-      </div>
-      <?php endif; ?>
       <div class="btn-row">
         <button type="button" class="btn secondary" data-close-modal><?= te('btn.cancel') ?></button>
         <button type="submit" class="btn"><?= te('btn.save') ?></button>
@@ -42,3 +37,4 @@
     </form>
   </div>
 </div>
+<?php endif; ?>

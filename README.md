@@ -15,12 +15,15 @@ Plain PHP 8 + SQLite — no build step, no dependencies to install.
 - **Languages** – Greek and English (auto-detected, switchable in Settings)
 - **Layout width** – *narrow*, *wide* or *wider* (Settings → Appearance)
 
-## Entry code
+## Login
 
-On first visit the app asks you to set an **entry code** (setup screen). Until it is set nothing else works,
-so set it right after deploying — whoever opens the page first can set it.
-The code is required to add/edit/delete weight, change the goal, change the code, and to reveal or
-regenerate the Apple Health key. Viewing the pages is not protected.
+On first visit the app asks you to set a **password** (setup screen); nothing else works until it is set,
+so do it right after deploying — whoever opens the page first can set it.
+
+- Anyone can **view** Stats, Exercise and Log.
+- **Logging in** is required for Settings, adding/editing/deleting weight, changing the goal,
+  and the Apple Health key. Sessions last 30 days and are stored in `data/sessions/`.
+- The Apple Health sync endpoint uses its own access key and does not need a login.
 
 ## Requirements
 

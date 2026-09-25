@@ -2,18 +2,12 @@
 declare(strict_types=1);
 require_once __DIR__ . '/includes/functions.php';
 
+varos_require_admin('settings.php');
+
 $settings = varos_get_settings();
 $entries = get_entries();
 $workoutCount = count_workouts();
 $stepDayCount = count_step_days();
-// Το κλειδί API εμφανίζεται μόνο μετά από σωστό κωδικό.
-$revealToken = false;
-$badCode = false;
-if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['reveal'])) {
-    $revealToken = varos_check_entry_code((string)($_POST['code'] ?? ''));
-    $badCode = !$revealToken;
-}
-
 $endpoint = app_base_url() . '/api/health.php';
 $token = (string)($settings['api_token'] ?? '');
 $isHttps = str_starts_with($endpoint, 'https://');
@@ -27,7 +21,6 @@ require __DIR__ . '/includes/header.php';
 ?>
 
 <?= render_flash() ?>
-<?php if ($badCode): ?><div class="flash error"><?= te('flash.badcode') ?></div><?php endif; ?>
 
 <div class="section-title"><?= te('settings.goal_title') ?></div>
 <div class="form-card">
@@ -70,11 +63,6 @@ require __DIR__ . '/includes/header.php';
              value="<?= e($settings['start_date'] ?? ($entries ? $entries[0]['entry_date'] : date('Y-m-d'))) ?>">
     </div>
 
-    <div class="field">
-      <label for="goal_code"><?= te('code.field') ?></label>
-      <input type="password" id="goal_code" name="code" autocomplete="off" required>
-    </div>
-
     <div class="btn-row">
       <button type="submit" class="btn"><?= te('settings.save') ?></button>
     </div>
@@ -82,35 +70,7 @@ require __DIR__ . '/includes/header.php';
   <p class="hint"><?= te('settings.hint') ?></p>
 </div>
 
-<div class="section-title"><?= te('prefs.title') ?></div>
-<div class="form-card">
-  <form method="post" action="actions.php">
-    <input type="hidden" name="action" value="save_prefs">
-    <input type="hidden" name="redirect" value="settings.php">
-    <div class="field-row">
-      <div class="field">
-        <label for="lang"><?= te('prefs.language') ?></label>
-        <select id="lang" name="lang">
-          <?php foreach (VAROS_LANGS as $code => $name): ?>
-            <option value="<?= e($code) ?>" <?= varos_lang() === $code ? 'selected' : '' ?>><?= e($name) ?></option>
-          <?php endforeach; ?>
-        </select>
-      </div>
-      <div class="field">
-        <label for="width"><?= te('prefs.width') ?></label>
-        <select id="width" name="width">
-          <?php foreach (VAROS_WIDTHS as $w): ?>
-            <option value="<?= e($w) ?>" <?= varos_width() === $w ? 'selected' : '' ?>><?= te('prefs.width_' . $w) ?></option>
-          <?php endforeach; ?>
-        </select>
-      </div>
-    </div>
-    <div class="btn-row">
-      <button type="submit" class="btn"><?= te('prefs.save') ?></button>
-    </div>
-  </form>
-  <p class="hint"><?= te('prefs.hint') ?></p>
-</div>
+<?php $prefsRedirect = 'settings.php'; require __DIR__ . '/includes/prefs_form.php'; ?>
 
 <div class="section-title"><?= te('code.title') ?></div>
 <div class="form-card">
@@ -146,27 +106,15 @@ require __DIR__ . '/includes/header.php';
   </div>
   <div class="field">
     <label><?= te('health.token') ?></label>
-    <?php if ($revealToken): ?>
-    <div class="copy-row">
-      <code><?= e($token) ?></code>
-      <button type="button" class="btn secondary" data-copy="<?= e($token) ?>" data-copied="<?= te('btn.copied') ?>"><?= te('btn.copy') ?></button>
-    </div>
-    <?php else: ?>
-    <form method="post" action="settings.php#health" data-needs-code="<?= te('code.prompt') ?>">
-      <input type="hidden" name="reveal" value="1">
-      <input type="hidden" name="code" value="">
-      <div class="copy-row">
-        <code>••••••••••••••••••••</code>
-        <button type="submit" class="btn secondary"><?= te('token.show') ?></button>
-      </div>
-    </form>
-    <?php endif; ?>
+  <div class="copy-row">
+    <code><?= e($token) ?></code>
+    <button type="button" class="btn secondary" data-copy="<?= e($token) ?>" data-copied="<?= te('btn.copied') ?>"><?= te('btn.copy') ?></button>
+  </div>
   </div>
   <?php if (!$isHttps): ?><p class="hint"><?= te('health.https_warn') ?></p><?php endif; ?>
 
-  <form method="post" action="actions.php" data-confirm="<?= te('health.confirm_regen') ?>" data-needs-code="<?= te('code.prompt') ?>">
+  <form method="post" action="actions.php" data-confirm="<?= te('health.confirm_regen') ?>">
     <input type="hidden" name="action" value="regen_token">
-    <input type="hidden" name="code" value="">
     <input type="hidden" name="redirect" value="settings.php">
     <div class="btn-row">
       <button type="submit" class="btn danger"><?= te('health.regen') ?></button>
@@ -205,6 +153,14 @@ require __DIR__ . '/includes/header.php';
   <p style="margin:0 0 4px;font-size:13px;color:var(--ink-soft);"><?= te('data.workout_count', ['n' => $workoutCount]) ?></p>
   <p style="margin:0 0 10px;font-size:13px;color:var(--ink-soft);"><?= te('data.step_days', ['n' => $stepDayCount]) ?></p>
   <a class="btn secondary" href="logbook.php"><?= te('data.open_log') ?></a>
+</div>
+
+<div class="section-title"><?= te('auth.title') ?></div>
+<div class="form-card">
+  <form method="post" action="actions.php">
+    <input type="hidden" name="action" value="logout">
+    <button type="submit" class="btn secondary"><?= te('auth.logout') ?></button>
+  </form>
 </div>
 
 <?php require __DIR__ . '/includes/footer.php'; ?>
