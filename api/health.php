@@ -33,13 +33,14 @@ function sync_log(int $code, array $data): void
             'note' => $GLOBALS['sync_note'],
             'body_bytes' => strlen($raw),
             'top_keys' => $keys,
-            'body_start' => mb_substr($raw, 0, 400),
-        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            'body_start' => substr($raw, 0, 600),
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE | JSON_PARTIAL_OUTPUT_ON_ERROR);
         $lines = is_file($file) ? file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) : [];
         $lines[] = $line;
         file_put_contents($file, implode("\n", array_slice($lines, -30)) . "\n", LOCK_EX);
     } catch (Throwable $e) {
         // Η καταγραφή δεν πρέπει ποτέ να χαλάει την απάντηση.
+        error_log('varos sync_log: ' . $e->getMessage());
     }
 }
 

@@ -1,6 +1,9 @@
 <?php
 declare(strict_types=1);
 
+// Ζώνη ώρας της εφαρμογής (μπορεί να αλλάξει με τη μεταβλητή περιβάλλοντος VAROS_TZ).
+date_default_timezone_set(getenv('VAROS_TZ') ?: 'Europe/Athens');
+
 require_once __DIR__ . '/i18n.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/workouts.php';
