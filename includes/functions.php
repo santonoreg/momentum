@@ -1,6 +1,9 @@
 <?php
 declare(strict_types=1);
 
+// Σε servers με περιορισμούς ασφαλείας το PCRE JIT αποτυγχάνει και βγάζει warning μέσα στην απάντηση.
+@ini_set('pcre.jit', '0');
+
 // Ζώνη ώρας της εφαρμογής (μπορεί να αλλάξει με τη μεταβλητή περιβάλλοντος VAROS_TZ).
 date_default_timezone_set(getenv('VAROS_TZ') ?: 'Europe/Athens');
 
