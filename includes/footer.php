@@ -1,10 +1,6 @@
   </main>
 
   <nav class="tabbar">
-    <a href="index.php" class="tab <?= $activeTab === 'summary' ? 'is-active' : '' ?>">
-      <svg viewBox="0 0 24 24" class="tab-icon"><path d="M4 13a8 8 0 1 1 16 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 13l4-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="13" r="1.4" fill="currentColor"/></svg>
-      <span><?= te('nav.summary') ?></span>
-    </a>
     <a href="reports.php" class="tab <?= $activeTab === 'reports' ? 'is-active' : '' ?>">
       <svg viewBox="0 0 24 24" class="tab-icon"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <span><?= te('nav.stats') ?></span>

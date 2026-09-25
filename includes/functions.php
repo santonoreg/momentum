@@ -366,3 +366,12 @@ function n_day_low(array $entries, int $days = 10): ?float
     }
     return $low ?? (float)end($entries)['weight'];
 }
+
+/** Κλάση χρώματος για μεταβολή βάρους: πράσινο όταν πάει προς τον στόχο, κόκκινο όταν απομακρύνεται. */
+function chip_class(?float $v, int $direction): string
+{
+    if ($v === null || $direction === 0) return '';
+    $favorable = $direction < 0 ? $v > 0.0001 : $v < -0.0001;
+    if (abs($v) < 0.0001) return '';
+    return $favorable ? 'pos' : 'neg';
+}

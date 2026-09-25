@@ -3,7 +3,6 @@
 return [
     'app.name' => 'Βάρος',
 
-    'nav.summary' => 'Σύνοψη',
     'nav.stats' => 'Στατιστικά',
     'nav.exercise' => 'Άσκηση',
     'nav.log' => 'Ημερολόγιο',
@@ -39,26 +38,9 @@ return [
     'btn.copied' => 'Αντιγράφηκε',
 
     // Σύνοψη
-    'summary.title' => 'Σύνοψη',
-    'summary.empty_title' => 'Ξεκίνα την καταγραφή',
-    'summary.empty_text' => 'Πρόσθεσε τη σημερινή σου ζύγιση για να ξεκινήσει η παρακολούθηση της προόδου σου.',
-    'hero.current' => 'Τρέχον βάρος',
-    'hero.nogoal_text' => 'Όρισε αρχικό βάρος, στόχο και ύψος για να δεις πρόοδο, ορόσημα και τον δείκτη BMI.',
-    'hero.set_goal' => 'Ρύθμιση στόχου',
-    'hero.goal_loss' => 'Στόχος απώλειας',
-    'hero.goal_gain' => 'Στόχος πρόσληψης',
-    'hero.goal' => 'Στόχος',
-    'hero.milestone' => 'Ορόσημο {n} από {total}',
-    'hero.togo' => 'Απομένουν {value} ως τον στόχο',
     'section.change' => 'Μεταβολή βάρους',
     'chip.days' => '{n} ημέρες',
     'chip.total' => 'Συνολικά',
-    'section.recent' => 'Πρόσφατη πορεία',
-    'ts.high' => 'Υψηλό',
-    'ts.latest' => 'Τελευταίο',
-    'ts.trend' => 'Τάση',
-    'ts.low' => 'Χαμηλό',
-    'ts.trend_sub' => '7-ήμερος μ.ό.',
 
     // Φόρμα καταχώρησης
     'entry.new' => 'Νέα καταχώρηση',
@@ -79,8 +61,17 @@ return [
     'log.confirm_delete' => 'Διαγραφή της καταχώρησης της {date};',
 
     // Στατιστικά
+    'reports.metric_weight' => 'Βάρος',
+    'reports.metric_steps' => 'Βήματα',
+    'reports.metric_both' => 'Βάρος + βήματα',
+    'reports.need_steps' => 'Δεν υπάρχουν δεδομένα βημάτων σε αυτό το διάστημα.',
+    'reports.steps_title' => 'Στατιστικά βημάτων',
+    'reports.steps_today' => 'Σήμερα',
+    'reports.steps_avg' => 'Μ.ό. ανά ημέρα',
+    'reports.steps_best' => 'Καλύτερη ημέρα',
+    'reports.steps_total' => 'Σύνολο',
     'reports.title' => 'Στατιστικά',
-    'reports.chart_title' => 'Γράφημα βάρους',
+    'reports.chart_title' => 'Γράφημα',
     'range.days' => '{n} ημέρες',
     'range.all' => 'Όλα',
     'reports.need_two' => 'Χρειάζονται τουλάχιστον 2 καταχωρήσεις σε αυτό το διάστημα για γράφημα.',
@@ -102,10 +93,6 @@ return [
 
     // Άσκηση
     'exercise.title' => 'Άσκηση',
-    'exercise.steps_title' => 'Βήματα (14 ημέρες)',
-    'exercise.steps_today' => 'Σήμερα',
-    'exercise.steps_avg7' => 'Μ.ό. 7 ημερών',
-    'exercise.steps_best' => 'Καλύτερη (30 ημ.)',
     'exercise.last7' => 'Τελευταίες 7 ημέρες',
     'exercise.sessions' => 'Προπονήσεις',
     'exercise.time' => 'Διάρκεια',

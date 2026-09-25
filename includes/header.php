@@ -1,11 +1,11 @@
 <?php
 /**
  * @var string $pageTitle
- * @var string $activeTab  one of: summary, reports, exercise, logbook, settings
+ * @var string $activeTab  one of: reports, exercise, logbook, settings
  * @var bool $needsChart   φόρτωσε Chart.js
  */
 $pageTitle = $pageTitle ?? t('app.name');
-$activeTab = $activeTab ?? 'summary';
+$activeTab = $activeTab ?? 'reports';
 $needsChart = $needsChart ?? false;
 
 $__headerToday = new DateTime('now');

@@ -9,9 +9,9 @@ Plain PHP 8 + SQLite — no build step, no dependencies to install.
 
 - **Weight log** – daily entries, edit/delete, trend, 7/30/90-day change
 - **Goal & milestones** – progress ring, configurable number of milestones
-- **Statistics** – chart with selectable range, BMI gauge and category ranges
-- **Exercise** – daily steps and workouts synced from Apple Health (see below): weekly totals,
-  weekly activity chart, list of recent workouts
+- **Statistics** (home page) – chart of weight, steps or both with selectable range, weight-change cards, step statistics, BMI gauge and category ranges
+- **Exercise** – workouts synced from Apple Health (see below): weekly totals,
+  weekly activity chart, list of recent workouts. Daily steps are shown in Statistics.
 - **Languages** – Greek and English (auto-detected, switchable in Settings)
 - **Layout width** – *narrow*, *wide* or *wider* (Settings → Appearance)
 
@@ -50,7 +50,7 @@ Re-sending the same workout is safe: entries are de-duplicated by workout id.
 **Steps:** create an automation with data type **Health Metrics** → **Step Count**
 (keep the aggregation fixed, e.g. *Daily*). Samples are keyed by their timestamp, so
 re-sending is safe, but mixing daily and hourly aggregation would count steps twice.
-Steps appear at the top of the **Exercise** tab.
+Steps appear in the **Statistics** chart.
 
 ### Endpoint
 
@@ -92,7 +92,7 @@ the code to `VAROS_LANGS` in `includes/i18n.php`. Missing keys fall back to Gree
 ## Project layout
 
 ```
-index.php  reports.php  exercise.php  logbook.php  settings.php   pages
+reports.php    exercise.php  logbook.php  settings.php   pages
 actions.php                                                       form actions
 api/health.php                                                    Apple Health endpoint
 includes/                                                         db, helpers, i18n, layout

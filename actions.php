@@ -4,15 +4,15 @@ declare(strict_types=1);
 require_once __DIR__ . '/includes/functions.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: index.php');
+    header('Location: reports.php');
     exit;
 }
 
 $action = $_POST['action'] ?? '';
-$redirect = $_POST['redirect'] ?? 'index.php';
+$redirect = $_POST['redirect'] ?? 'reports.php';
 // Μόνο τοπικά αρχεία επιτρέπονται ως προορισμός ανακατεύθυνσης.
 if (!preg_match('/^[a-z_]+\.php$/', $redirect)) {
-    $redirect = 'index.php';
+    $redirect = 'reports.php';
 }
 
 function back(string $to, string $status = 'ok'): void

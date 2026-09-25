@@ -76,25 +76,67 @@
     }
   });
 
+  // ---------- Chart.js: κοινά χρώματα ----------
+  function chartColors() {
+    var css = getComputedStyle(document.documentElement);
+    return {
+      primary: css.getPropertyValue('--primary').trim() || '#1F6F5C',
+      gold: css.getPropertyValue('--gold').trim() || '#B4842A',
+      ink: css.getPropertyValue('--ink-soft').trim() || '#52625B'
+    };
+  }
+
   // ---------- Chart.js: ραβδογράμμα ----------
-  window.varosBarChart = function (canvasId, labels, values) {
+  window.varosBarChart = function (canvasId, labels, values, opts) {
     var el = document.getElementById(canvasId);
     if (!el || typeof Chart === 'undefined') return null;
-    var css = getComputedStyle(document.documentElement);
-    var primary = css.getPropertyValue('--primary').trim() || '#1F6F5C';
-    var ink = css.getPropertyValue('--ink-soft').trim() || '#52625B';
+    opts = opts || {};
+    var c = chartColors();
 
     return new Chart(el.getContext('2d'), {
       type: 'bar',
-      data: { labels: labels, datasets: [{ data: values, backgroundColor: primary, borderRadius: 5, maxBarThickness: 28 }] },
+      data: { labels: labels, datasets: [{ data: values, backgroundColor: opts.color === 'gold' ? c.gold : c.primary, borderRadius: 5, maxBarThickness: 28 }] },
       options: {
         responsive: true,
         maintainAspectRatio: false,
         animation: { duration: 400 },
         plugins: { legend: { display: false } },
         scales: {
-          x: { grid: { display: false }, ticks: { color: ink, font: { size: 10 }, maxTicksLimit: 12 } },
-          y: { beginAtZero: true, grid: { color: '#DCE4DF' }, ticks: { color: ink, font: { size: 10 } } }
+          x: { grid: { display: false }, ticks: { color: c.ink, font: { size: 10 }, maxTicksLimit: 12 } },
+          y: { beginAtZero: true, grid: { color: '#DCE4DF' }, ticks: { color: c.ink, font: { size: 10 } } }
+        }
+      }
+    });
+  };
+
+  // ---------- Chart.js: βάρος (γραμμή, αριστερός άξονας) + βήματα (ράβδοι, δεξιός άξονας) ----------
+  window.varosComboChart = function (canvasId, labels, weights, steps, opts) {
+    var el = document.getElementById(canvasId);
+    if (!el || typeof Chart === 'undefined') return null;
+    opts = opts || {};
+    var c = chartColors();
+
+    return new Chart(el.getContext('2d'), {
+      data: {
+        labels: labels,
+        datasets: [
+          { type: 'bar', label: opts.stepsLabel || 'Steps', data: steps, yAxisID: 'y1', order: 2,
+            backgroundColor: c.gold + '55', borderRadius: 4, maxBarThickness: 22 },
+          { type: 'line', label: opts.weightLabel || 'Weight', data: weights, yAxisID: 'y', order: 1,
+            borderColor: c.primary, backgroundColor: c.primary, borderWidth: 2, tension: 0.35, spanGaps: true,
+            pointRadius: opts.points === false ? 0 : 2, pointBackgroundColor: c.primary }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 400 },
+        interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { display: true, labels: { color: c.ink, boxWidth: 10, font: { size: 11 } } } },
+        scales: {
+          x: { grid: { display: false }, ticks: { color: c.ink, font: { size: 10 }, maxTicksLimit: 8 } },
+          y: { position: 'left', grid: { color: '#DCE4DF' }, ticks: { color: c.primary, font: { size: 10 } } },
+          y1: { position: 'right', beginAtZero: true, grid: { drawOnChartArea: false }, ticks: { color: c.gold, font: { size: 10 } } }
         }
       }
     });
