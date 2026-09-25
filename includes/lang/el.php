@@ -102,6 +102,10 @@ return [
 
     // Άσκηση
     'exercise.title' => 'Άσκηση',
+    'exercise.steps_title' => 'Βήματα (14 ημέρες)',
+    'exercise.steps_today' => 'Σήμερα',
+    'exercise.steps_avg7' => 'Μ.ό. 7 ημερών',
+    'exercise.steps_best' => 'Καλύτερη (30 ημ.)',
     'exercise.last7' => 'Τελευταίες 7 ημέρες',
     'exercise.sessions' => 'Προπονήσεις',
     'exercise.time' => 'Διάρκεια',
@@ -163,16 +167,19 @@ return [
     'health.last_sync' => 'Τελευταίος συγχρονισμός',
     'health.never' => 'Δεν έχει γίνει ακόμη',
     'health.workouts' => 'Προπονήσεις που έχουν εισαχθεί',
+    'health.steps_imported' => 'Ημέρες με βήματα',
     'health.steps_title' => 'Οδηγίες (Health Auto Export)',
     'health.step1' => 'Εγκατέστησε την εφαρμογή «Health Auto Export» στο iPhone και δώσε της πρόσβαση στα δεδομένα Υγείας.',
     'health.step2' => 'Πήγαινε στο Automations → New Automation και διάλεξε τύπο «REST API».',
     'health.step3' => 'Στο URL βάλε τη διεύθυνση από πάνω. Στα Headers πρόσθεσε: Authorization = Bearer <το κλειδί>. Μέθοδος POST, μορφή JSON.',
     'health.step4' => 'Στα δεδομένα διάλεξε «Workouts» και όρισε πότε να συγχρονίζει (π.χ. κάθε ώρα). Πάτησε «Manual Export» για δοκιμή.',
+    'health.metrics_hint' => 'Για βήματα: στο ίδιο ή σε δεύτερο automation διάλεξε «Health Metrics» → «Step Count». Κράτα σταθερή τη συγκέντρωση (π.χ. Daily), ώστε να μην διπλομετριούνται.',
     'health.alt' => 'Εναλλακτικά μπορείς να χρησιμοποιήσεις μια Αυτοματοποίηση στις Συντομεύσεις (Shortcuts) — δες το README για το ακριβές σχήμα JSON.',
     'health.https_warn' => 'Προσοχή: για να φτάσουν τα δεδομένα από το iPhone, η εφαρμογή πρέπει να είναι προσβάσιμη από το διαδίκτυο (προτίμησε HTTPS).',
 
     'data.title' => 'Δεδομένα',
     'data.weight_count' => '{n} καταχωρήσεις βάρους αποθηκευμένες.',
     'data.workout_count' => '{n} προπονήσεις αποθηκευμένες.',
+    'data.step_days' => '{n} ημέρες με βήματα αποθηκευμένες.',
     'data.open_log' => 'Άνοιγμα ημερολογίου',
 ];

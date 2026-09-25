@@ -60,6 +60,17 @@ function varos_db(): PDO
     ');
     $pdo->exec('CREATE INDEX IF NOT EXISTS idx_workouts_date ON workouts (workout_date)');
 
+    // Βήματα: ένα δείγμα ανά χρονική στιγμή (ημερήσιο ή ωριαίο, ανάλογα με τον συγκεντρωτικό τρόπο του export).
+    // Το κλειδί είναι η στιγμή του δείγματος, ώστε η επαναποστολή να μην διπλομετράει.
+    $pdo->exec('
+        CREATE TABLE IF NOT EXISTS step_samples (
+            sample_ts TEXT PRIMARY KEY,
+            day TEXT NOT NULL,
+            steps REAL NOT NULL
+        )
+    ');
+    $pdo->exec('CREATE INDEX IF NOT EXISTS idx_step_samples_day ON step_samples (day)');
+
     // Μετανάστευση: νέες στήλες στον πίνακα ρυθμίσεων (κλειδί API + τελευταίος συγχρονισμός).
     $cols = array_column($pdo->query('PRAGMA table_info(settings)')->fetchAll(PDO::FETCH_ASSOC), 'name');
     if (!in_array('api_token', $cols, true)) {

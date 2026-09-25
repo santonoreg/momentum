@@ -247,3 +247,89 @@ function app_base_url(): string
     $dir = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/')), '/');
     return ($https ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . $dir;
 }
+
+// ---------------------------------------------------------------- βήματα
+
+/** Ημερήσια βήματα για τις τελευταίες $days ημέρες: [ 'Y-m-d' => steps ], μόνο ημέρες με δεδομένα. */
+function get_daily_steps(int $days = 30): array
+{
+    $stmt = varos_db()->prepare('SELECT day, SUM(steps) AS steps FROM step_samples WHERE day >= :since GROUP BY day ORDER BY day ASC');
+    $stmt->execute([':since' => date('Y-m-d', strtotime('-' . ($days - 1) . ' days'))]);
+    $out = [];
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
+        $out[$r['day']] = (float)$r['steps'];
+    }
+    return $out;
+}
+
+function count_step_days(): int
+{
+    return (int)varos_db()->query('SELECT COUNT(DISTINCT day) FROM step_samples')->fetchColumn();
+}
+
+/** @param array<int,array{ts:string,day:string,steps:float}> $samples */
+function upsert_step_samples(array $samples): void
+{
+    $stmt = varos_db()->prepare('
+        INSERT INTO step_samples (sample_ts, day, steps) VALUES (:ts, :d, :s)
+        ON CONFLICT(sample_ts) DO UPDATE SET day = excluded.day, steps = excluded.steps
+    ');
+    foreach ($samples as $s) {
+        $stmt->execute([':ts' => $s['ts'], ':d' => $s['day'], ':s' => $s['steps']]);
+    }
+}
+
+/**
+ * Δείγματα βημάτων από το JSON: Health Auto Export (data.metrics[] με name = step_count)
+ * ή απλή μορφή { "steps": [ { "date": "...", "qty": 8234 } ] }.
+ */
+function parse_health_steps(mixed $json): array
+{
+    if (!is_array($json)) {
+        return [];
+    }
+    $points = [];
+    $metrics = $json['data']['metrics'] ?? $json['metrics'] ?? null;
+    if (is_array($metrics)) {
+        foreach ($metrics as $m) {
+            if (!is_array($m)) {
+                continue;
+            }
+            $name = strtolower(preg_replace('/[^a-z]/i', '', (string)($m['name'] ?? '')));
+            if ($name === 'stepcount' && is_array($m['data'] ?? null)) {
+                array_push($points, ...array_values($m['data']));
+            }
+        }
+    } elseif (is_array($json['steps'] ?? null)) {
+        $points = array_values($json['steps']);
+    }
+
+    $bucket = [];
+    foreach ($points as $p) {
+        if (!is_array($p)) {
+            continue;
+        }
+        $dt = hk_parse_datetime(hk_first($p, ['date', 'start', 'startDate']));
+        $q = hk_qty(hk_first($p, ['qty', 'steps', 'count', 'value']));
+        if ($dt === null || $q === null) {
+            continue;
+        }
+        $key = $dt[0] . ' ' . ($dt[1] ?? '00:00:00');
+        $bucket[$key] = ($bucket[$key] ?? ['ts' => $key, 'day' => $dt[0], 'steps' => 0.0]);
+        $bucket[$key]['steps'] += $q[0];
+    }
+    return array_values($bucket);
+}
+
+/** Ονόματα μετρικών που περιέχει το payload (για διάγνωση). */
+function payload_metric_names(mixed $json): array
+{
+    $metrics = is_array($json) ? ($json['data']['metrics'] ?? $json['metrics'] ?? []) : [];
+    $names = [];
+    foreach (is_array($metrics) ? $metrics : [] as $m) {
+        if (is_array($m) && isset($m['name'])) {
+            $names[] = (string)$m['name'];
+        }
+    }
+    return $names;
+}

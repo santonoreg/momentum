@@ -10,7 +10,7 @@ Plain PHP 8 + SQLite — no build step, no dependencies to install.
 - **Weight log** – daily entries, edit/delete, trend, 7/30/90-day change
 - **Goal & milestones** – progress ring, configurable number of milestones
 - **Statistics** – chart with selectable range, BMI gauge and category ranges
-- **Exercise** – workouts synced from Apple Health (see below): weekly totals,
+- **Exercise** – daily steps and workouts synced from Apple Health (see below): weekly totals,
   weekly activity chart, list of recent workouts
 - **Languages** – Greek and English (auto-detected, switchable in Settings)
 - **Layout width** – *narrow*, *wide* or *wider* (Settings → Appearance)
@@ -47,6 +47,11 @@ the data by itself. Instead, an iPhone app **pushes** your workouts to this app:
 
 Re-sending the same workout is safe: entries are de-duplicated by workout id.
 
+**Steps:** create an automation with data type **Health Metrics** → **Step Count**
+(keep the aggregation fixed, e.g. *Daily*). Samples are keyed by their timestamp, so
+re-sending is safe, but mixing daily and hourly aggregation would count steps twice.
+Steps appear at the top of the **Exercise** tab.
+
 ### Endpoint
 
 `POST /api/health.php` — authenticate with `Authorization: Bearer <key>`,
@@ -62,6 +67,10 @@ Accepted JSON shapes:
     "distance": { "qty": 6.2, "units": "km" },
     "activeEnergyBurned": { "qty": 412, "units": "kcal" },
     "avgHeartRate": { "qty": 151, "units": "bpm" } } ] } }
+
+// Health Auto Export – steps (Health Metrics → Step Count)
+{ "data": { "metrics": [ { "name": "step_count", "units": "count",
+    "data": [ { "date": "2026-09-24 00:00:00 +0300", "qty": 8234 } ] } ] } }
 
 // Simple format (e.g. from an iOS Shortcuts automation)
 [ { "type": "Cycling", "start": "2026-09-20T09:00:00",

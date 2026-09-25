@@ -104,8 +104,11 @@ if (!is_array($json)) {
 }
 
 $workouts = parse_health_payload($json);
-if (!$workouts) {
-    $GLOBALS['sync_note'] = 'authenticated, but no workouts found in payload (wrong data type selected in the app?)';
+$steps = parse_health_steps($json);
+if (!$workouts && !$steps) {
+    $names = payload_metric_names($json);
+    $GLOBALS['sync_note'] = 'authenticated, but no workouts or step_count found in payload'
+        . ($names ? ' (metrics received: ' . implode(', ', array_slice($names, 0, 10)) . ')' : '');
 }
 
 $pdo = varos_db();
@@ -114,6 +117,7 @@ try {
     foreach ($workouts as $w) {
         upsert_workout($w);
     }
+    upsert_step_samples($steps);
     varos_touch_last_sync();
     $pdo->commit();
 } catch (Throwable $ex) {
@@ -122,4 +126,4 @@ try {
     api_out(500, ['ok' => false, 'error' => 'Could not store workouts']);
 }
 
-api_out(200, ['ok' => true, 'imported' => count($workouts)]);
+api_out(200, ['ok' => true, 'imported' => count($workouts), 'step_samples' => count($steps)]);

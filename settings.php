@@ -5,6 +5,7 @@ require_once __DIR__ . '/includes/functions.php';
 $settings = varos_get_settings();
 $entries = get_entries();
 $workoutCount = count_workouts();
+$stepDayCount = count_step_days();
 
 $endpoint = app_base_url() . '/api/health.php';
 $token = (string)($settings['api_token'] ?? '');
@@ -135,6 +136,10 @@ require __DIR__ . '/includes/header.php';
       <div class="l"><?= te('health.workouts') ?></div>
       <div class="v"><?= (int)$workoutCount ?></div>
     </div>
+    <div>
+      <div class="l"><?= te('health.steps_imported') ?></div>
+      <div class="v"><?= (int)$stepDayCount ?></div>
+    </div>
   </div>
 
   <p class="para" style="margin-top:16px;"><b><?= te('health.steps_title') ?></b></p>
@@ -144,13 +149,15 @@ require __DIR__ . '/includes/header.php';
     <li><?= te('health.step3') ?></li>
     <li><?= te('health.step4') ?></li>
   </ol>
+  <p class="hint"><?= te('health.metrics_hint') ?></p>
   <p class="hint"><?= te('health.alt') ?></p>
 </div>
 
 <div class="section-title"><?= te('data.title') ?></div>
 <div class="form-card">
   <p style="margin:0 0 4px;font-size:13px;color:var(--ink-soft);"><?= te('data.weight_count', ['n' => count($entries)]) ?></p>
-  <p style="margin:0 0 10px;font-size:13px;color:var(--ink-soft);"><?= te('data.workout_count', ['n' => $workoutCount]) ?></p>
+  <p style="margin:0 0 4px;font-size:13px;color:var(--ink-soft);"><?= te('data.workout_count', ['n' => $workoutCount]) ?></p>
+  <p style="margin:0 0 10px;font-size:13px;color:var(--ink-soft);"><?= te('data.step_days', ['n' => $stepDayCount]) ?></p>
   <a class="btn secondary" href="logbook.php"><?= te('data.open_log') ?></a>
 </div>
 
