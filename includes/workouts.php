@@ -154,7 +154,10 @@ function parse_workout(array $w): ?array
     }
     [$date, $time] = $start;
 
-    $type = normalize_workout_type((string)(hk_first($w, ['name', 'type', 'workoutActivityType', 'workout_type', 'activity']) ?? 'Workout'));
+    // Το είδος μπορεί να λείπει από το ανώτερο επίπεδο και να υπάρχει μόνο στο activities[0].activityType.
+    $rawType = hk_first($w, ['name', 'type', 'workoutActivityType', 'workout_type', 'activity'])
+        ?? (is_array($w['activities'][0] ?? null) ? hk_first($w['activities'][0], ['activityType', 'name', 'type']) : null);
+    $type = normalize_workout_type(is_scalar($rawType) ? (string)$rawType : 'Workout');
 
     // Διάρκεια -> λεπτά
     $minutes = null;
