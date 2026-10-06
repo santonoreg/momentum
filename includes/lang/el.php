@@ -117,6 +117,8 @@ return [
     'hm.six_minute_walking_test_distance' => 'Τεστ 6λεπτου βαδίσματος',
     'hm.environmental_audio_exposure' => 'Θόρυβος περιβάλλοντος',
     'hm.headphone_audio_exposure' => 'Θόρυβος ακουστικών',
+    'rec.samples' => '{n} σημεία κυματομορφής',
+    'rk.ecg' => 'ΗΚΓ (ECG)',
     'btn.cancel' => 'Άκυρο',
     'btn.save' => 'Αποθήκευση',
     'btn.copy' => 'Αντιγραφή',

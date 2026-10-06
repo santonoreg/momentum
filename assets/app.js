@@ -156,6 +156,27 @@
     });
   };
 
+  // ---------- Κυματομορφή (ECG): το γράφημα δημιουργείται μόλις ανοίξει η εγγραφή ----------
+  window.varosWaveOnOpen = function (id, values) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var details = el.closest('details');
+    var done = false;
+    details.addEventListener('toggle', function () {
+      if (!details.open || done || typeof Chart === 'undefined') return;
+      done = true;
+      var css = getComputedStyle(document.documentElement);
+      new Chart(el.getContext('2d'), {
+        type: 'line',
+        data: { labels: values.map(function (_, i) { return i; }),
+                datasets: [{ data: values, borderColor: css.getPropertyValue('--rose').trim() || '#A84448', borderWidth: 1.2, pointRadius: 0, tension: 0 }] },
+        options: { responsive: true, maintainAspectRatio: false, animation: false, normalized: true,
+          plugins: { legend: { display: false }, tooltip: { enabled: false } },
+          scales: { x: { display: false }, y: { grid: { color: '#DCE4DF' }, ticks: { font: { size: 9 }, maxTicksLimit: 5 } } } }
+      });
+    });
+  };
+
   // ---------- Chart.js: βάρος (γραμμή, αριστερός άξονας) + βήματα (ράβδοι, δεξιός άξονας) ----------
   window.varosComboChart = function (canvasId, labels, weights, steps, opts) {
     var el = document.getElementById(canvasId);

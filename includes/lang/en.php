@@ -117,6 +117,8 @@ return [
     'hm.six_minute_walking_test_distance' => 'Six-minute walk distance',
     'hm.environmental_audio_exposure' => 'Environmental sound',
     'hm.headphone_audio_exposure' => 'Headphone audio',
+    'rec.samples' => '{n} waveform points',
+    'rk.ecg' => 'ECG',
     'btn.cancel' => 'Cancel',
     'btn.save' => 'Save',
     'btn.copy' => 'Copy',

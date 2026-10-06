@@ -92,6 +92,12 @@ Accepted JSON shapes:
     "duration_min": 75, "distance_km": 30, "calories": 540, "avg_hr": 128 } ]
 ```
 
+**Other records (ECG, symptoms, state of mind, medications…):** any list under `data.<name>` other than
+`metrics`/`workouts` is stored generically — scalar fields as a summary and the longest numeric array
+(e.g. the ECG voltage measurements, downsampled to 1500 points) as a waveform. They appear in the **Health** tab;
+ECG recordings expand to show the waveform. Create a Health Auto Export automation for the ECG data type with
+the same URL.
+
 Only `start` (or `date`) is required. If `id` is missing, one is derived from the
 start time, type and duration.
 

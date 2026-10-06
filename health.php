@@ -35,6 +35,9 @@ foreach ($cards as $i => $c) {
     $byGroup[$c['group']][] = $cards[$i];
 }
 
+$recordGroups = get_health_records(15);
+$recordCfg = [];
+
 // Προπονήσεις
 $workouts = get_workouts();
 $week = workouts_summary($workouts, 7);
@@ -63,7 +66,7 @@ require __DIR__ . '/includes/header.php';
 
 <?= render_flash() ?>
 
-<?php if (!$cards && !$workouts): ?>
+<?php if (!$cards && !$workouts && !$recordGroups): ?>
   <div class="card empty-state">
     <div class="big"><?= te('dash.empty_title') ?></div>
     <p><?= te('dash.empty_text') ?></p>
@@ -113,6 +116,33 @@ require __DIR__ . '/includes/header.php';
 <?php if ($lastSync): ?>
   <p class="hint"><?= te('exercise.last_sync', ['when' => $lastSync]) ?></p>
 <?php endif; ?>
+
+<?php foreach ($recordGroups as $kind => $recs): ?>
+  <div class="section-title"><?= e(record_kind_label($kind)) ?></div>
+  <div class="log-list">
+    <?php foreach ($recs as $ri => $rec):
+      $rid = 'rec-' . md5($kind . $ri);
+      $d = substr($rec['ts'], 0, 10);
+      $dl = $d === $today ? t('days.today') : ($d === $yesterday ? t('days.yesterday') : fmt_date($d));
+      $items = record_summary_items($rec['summary']);
+      if ($rec['series']) { $recordCfg[] = ['id' => $rid, 'values' => $rec['series']]; }
+    ?>
+    <details class="rec-row"<?= $rec['series'] ? ' data-wave="' . e($rid) . '"' : '' ?>>
+      <summary>
+        <div>
+          <div class="log-weight"><?= e($items ? $items[0][1] : record_kind_label($kind)) ?></div>
+          <div class="log-date"><?= e($dl) ?> · <?= e(substr($rec['ts'], 11, 5)) ?></div>
+        </div>
+        <div class="wk-sub"><?= e(implode(' · ', array_map(fn($i) => $i[0] . ': ' . $i[1], array_slice($items, 1)))) ?></div>
+      </summary>
+      <?php if ($rec['series']): ?>
+        <div class="rec-chart"><canvas id="<?= e($rid) ?>"></canvas></div>
+        <div class="hint"><?= te('rec.samples', ['n' => count($rec['series'])]) ?></div>
+      <?php endif; ?>
+    </details>
+    <?php endforeach; ?>
+  </div>
+<?php endforeach; ?>
 
 <div class="section-title"><?= te('dash.workouts_title') ?></div>
 <?php if (!$workouts): ?>
@@ -182,6 +212,8 @@ document.addEventListener('DOMContentLoaded', function () {
   var labels = <?= json_encode($labels, JSON_UNESCAPED_UNICODE) ?>;
   var cfgs = <?= json_encode($chartCfg, JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR) ?>;
   cfgs.forEach(function (c) { varosMetricChart(c.id, labels, c); });
+  var waves = <?= json_encode($recordCfg, JSON_PARTIAL_OUTPUT_ON_ERROR) ?>;
+  waves.forEach(function (w) { varosWaveOnOpen(w.id, w.values); });
 <?php if ($workouts): ?>
   varosBarChart('weeklyChart', <?= json_encode($weekLabels, JSON_UNESCAPED_UNICODE) ?>, <?= json_encode($weekValues) ?>);
 <?php endif; ?>

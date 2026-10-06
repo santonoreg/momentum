@@ -75,6 +75,20 @@ function varos_db(): PDO
     ');
     $pdo->exec('CREATE INDEX IF NOT EXISTS idx_health_metrics_day ON health_metrics (day)');
 
+    // Καταγραφές (ECG, συμπτώματα, state of mind...): σύνοψη + προαιρετική σειρά (συμπιεσμένη).
+    $pdo->exec('
+        CREATE TABLE IF NOT EXISTS health_records (
+            kind TEXT NOT NULL,
+            external_id TEXT NOT NULL,
+            ts TEXT NOT NULL,
+            day TEXT NOT NULL,
+            summary TEXT NOT NULL,
+            series BLOB,
+            PRIMARY KEY (kind, external_id)
+        )
+    ');
+    $pdo->exec('CREATE INDEX IF NOT EXISTS idx_health_records_ts ON health_records (kind, ts)');
+
     // Μετανάστευση από τον παλιό πίνακα βημάτων.
     if ($pdo->query("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'step_samples'")->fetchColumn()) {
         $pdo->exec("INSERT OR IGNORE INTO health_metrics (metric, ts, day, field, value, units)
