@@ -6,9 +6,9 @@
       <svg viewBox="0 0 24 24" class="tab-icon"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <span><?= te('nav.stats') ?></span>
     </a>
-    <a href="exercise.php" class="tab <?= $activeTab === 'exercise' ? 'is-active' : '' ?>">
-      <svg viewBox="0 0 24 24" class="tab-icon"><path d="M2 12h4l3-7 5 14 3-7h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <span><?= te('nav.exercise') ?></span>
+    <a href="health.php" class="tab <?= $activeTab === 'health' ? 'is-active' : '' ?>">
+      <svg viewBox="0 0 24 24" class="tab-icon"><path d="M20.8 5.6a5 5 0 0 0-7.1 0L12 7.3l-1.7-1.7a5 5 0 0 0-7.1 7.1L12 21.5l8.8-8.8a5 5 0 0 0 0-7.1z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+      <span><?= te('nav.health') ?></span>
     </a>
     <a href="logbook.php" class="tab <?= $activeTab === 'logbook' ? 'is-active' : '' ?>">
       <svg viewBox="0 0 24 24" class="tab-icon"><rect x="4" y="3" width="16" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>

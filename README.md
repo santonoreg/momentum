@@ -1,7 +1,7 @@
 # Momentum
 
 A small, self-hosted, mobile-first weight tracker with goal milestones, BMI, statistics
-and an exercise log that syncs automatically from Apple Health.
+and a health dashboard that syncs automatically from Apple Health.
 
 Plain PHP 8 + SQLite — no build step, no dependencies to install.
 
@@ -10,8 +10,9 @@ Plain PHP 8 + SQLite — no build step, no dependencies to install.
 - **Weight log** – daily entries, edit/delete, trend, 7/30/90-day change
 - **Goal & milestones** – progress ring, configurable number of milestones
 - **Statistics** (home page) – chart of weight, steps or both with selectable range, weight-change cards, step statistics, BMI gauge and category ranges
-- **Exercise** – workouts synced from Apple Health (see below): weekly totals,
-  weekly activity chart, list of recent workouts. Daily steps are shown in Statistics.
+- **Health** – dashboard of *any* metric synced from Apple Health (steps, energy, heart rate, HRV, sleep stages,
+  VO₂ max, blood pressure, mobility…), grouped into Activity / Heart / Sleep / Body / Mobility / Environment with
+  7/30/90/365-day ranges, plus workouts (weekly totals, chart, list). Daily steps also appear in Statistics.
 - **Languages** – Greek and English (auto-detected, switchable in Settings)
 - **Layout width** – *narrow*, *wide* or *wider* (Settings → Appearance)
 
@@ -57,10 +58,11 @@ the data by itself. Instead, an iPhone app **pushes** your workouts to this app:
 
 Re-sending the same workout is safe: entries are de-duplicated by workout id.
 
-**Steps:** create an automation with data type **Health Metrics** → **Step Count**
-(keep the aggregation fixed, e.g. *Daily*). Samples are keyed by their timestamp, so
-re-sending is safe, but mixing daily and hourly aggregation would count steps twice.
-Steps appear in the **Statistics** chart.
+**Health metrics:** create a second automation with data type **Health Metrics** and select any metrics you like.
+Use Aggregate **Days** with *Summarize* on (keeps requests small; the request limit is 8 MB — for the first
+export pick e.g. the last 30 days). Every metric is stored generically and shown automatically; unknown metrics
+appear under *Other*. Samples are keyed by their timestamp, so re-sending is safe, but changing the aggregation
+later (e.g. Days → Hours) would count cumulative metrics such as steps twice.
 
 ### Endpoint
 
@@ -78,9 +80,12 @@ Accepted JSON shapes:
     "activeEnergyBurned": { "qty": 412, "units": "kcal" },
     "avgHeartRate": { "qty": 151, "units": "bpm" } } ] } }
 
-// Health Auto Export – steps (Health Metrics → Step Count)
+// Health Auto Export – any Health Metrics (qty, or Min/Avg/Max, or named fields such as systolic/diastolic,
+// asleep/core/deep/rem/awake for sleep_analysis)
 { "data": { "metrics": [ { "name": "step_count", "units": "count",
-    "data": [ { "date": "2026-09-24 00:00:00 +0300", "qty": 8234 } ] } ] } }
+    "data": [ { "date": "2026-09-24 00:00:00 +0300", "qty": 8234 } ] },
+  { "name": "heart_rate", "units": "bpm",
+    "data": [ { "date": "2026-09-24 00:00:00 +0300", "Min": 52, "Avg": 70, "Max": 131 } ] } ] } }
 
 // Simple format (e.g. from an iOS Shortcuts automation)
 [ { "type": "Cycling", "start": "2026-09-20T09:00:00",
@@ -102,7 +107,7 @@ the code to `VAROS_LANGS` in `includes/i18n.php`. Missing keys fall back to Gree
 ## Project layout
 
 ```
-reports.php    exercise.php  logbook.php  settings.php   pages
+reports.php  health.php  logbook.php  settings.php  login.php  setup.php   pages
 actions.php                                                       form actions
 api/health.php                                                    Apple Health endpoint
 includes/                                                         db, helpers, i18n, layout

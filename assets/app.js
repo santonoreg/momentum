@@ -110,6 +110,52 @@
     });
   };
 
+  // ---------- Chart.js: κάρτα μετρικής Υγείας (bar / line με min-max / στοιβαγμένος ύπνος) ----------
+  window.varosMetricChart = function (canvasId, labels, cfg) {
+    var el = document.getElementById(canvasId);
+    if (!el || typeof Chart === 'undefined') return null;
+    var css = getComputedStyle(document.documentElement);
+    var v = function (n, d) { return css.getPropertyValue(n).trim() || d; };
+    var base = { primary: v('--primary', '#1F6F5C'), rose: v('--rose', '#A84448'), gold: v('--gold', '#B4842A'), steel: v('--cat-under', '#7C93A8') };
+    var ink = v('--ink-soft', '#52625B');
+    var stage = { deep: '#3E5C8A', core: '#7C93A8', rem: '#8E6FB5', awake: '#C1732E', asleep: '#7C93A8', totalsleep: '#7C93A8', inbed: '#B9C4CF' };
+    var color = base[cfg.color] || base.primary;
+    var palette = [color, base.steel, base.gold, base.rose];
+    var sleep = cfg.kind === 'sleep', bar = cfg.kind === 'bar';
+    var dense = labels.length > 60;
+    var multi = cfg.series.filter(function (s) { return s.role === 'main'; }).length > 1;
+    var mi = 0;
+
+    var datasets = cfg.series.map(function (s) {
+      if (sleep || bar) {
+        return { type: 'bar', label: s.label, data: s.values, backgroundColor: sleep ? (stage[s.field] || base.steel) : color,
+                 borderRadius: sleep ? 0 : 3, maxBarThickness: 22, stack: sleep ? 's' : undefined };
+      }
+      if (s.role === 'band') {
+        return { type: 'line', label: s.label, data: s.values, borderColor: color + '88', borderWidth: 1, borderDash: [4, 3],
+                 pointRadius: 0, spanGaps: true, tension: 0.3 };
+      }
+      var c = multi ? palette[mi++ % palette.length] : color;
+      return { type: 'line', label: s.label, data: s.values, borderColor: c, backgroundColor: c, borderWidth: 2, tension: 0.3,
+               spanGaps: true, pointRadius: dense ? 0 : 2, pointBackgroundColor: c };
+    });
+
+    return new Chart(el.getContext('2d'), {
+      data: { labels: labels, datasets: datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 300 },
+        interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { display: sleep || multi, labels: { color: ink, boxWidth: 8, font: { size: 10 } } } },
+        scales: {
+          x: { stacked: sleep, grid: { display: false }, ticks: { color: ink, font: { size: 9 }, maxTicksLimit: 6 } },
+          y: { stacked: sleep, beginAtZero: bar || sleep, grid: { color: '#DCE4DF' }, ticks: { color: ink, font: { size: 9 }, maxTicksLimit: 4 } }
+        }
+      }
+    });
+  };
+
   // ---------- Chart.js: βάρος (γραμμή, αριστερός άξονας) + βήματα (ράβδοι, δεξιός άξονας) ----------
   window.varosComboChart = function (canvasId, labels, weights, steps, opts) {
     var el = document.getElementById(canvasId);

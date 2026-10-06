@@ -96,6 +96,7 @@ if ($expected === '' || !hash_equals($expected, $given)) {
 }
 
 if ($raw === false || $raw === '' || strlen($raw) > 8 * 1024 * 1024) {
+    $GLOBALS['sync_note'] = 'empty or too large body (limit 8 MB; use Daily aggregation and a shorter date range)';
     api_out(400, ['ok' => false, 'error' => 'Empty or too large body']);
 }
 $json = json_decode($raw, true);
@@ -104,10 +105,10 @@ if (!is_array($json)) {
 }
 
 $workouts = parse_health_payload($json);
-$steps = parse_health_steps($json);
-if (!$workouts && !$steps) {
+$metricRows = parse_health_metrics($json);
+if (!$workouts && !$metricRows) {
     $names = payload_metric_names($json);
-    $GLOBALS['sync_note'] = 'authenticated, but no workouts or step_count found in payload'
+    $GLOBALS['sync_note'] = 'authenticated, but no workouts or health metrics found in payload'
         . ($names ? ' (metrics received: ' . implode(', ', array_slice($names, 0, 10)) . ')' : '');
 }
 
@@ -117,7 +118,7 @@ try {
     foreach ($workouts as $w) {
         upsert_workout($w);
     }
-    upsert_step_samples($steps);
+    upsert_health_metrics($metricRows);
     varos_touch_last_sync();
     $pdo->commit();
 } catch (Throwable $ex) {
@@ -126,4 +127,4 @@ try {
     api_out(500, ['ok' => false, 'error' => 'Could not store workouts']);
 }
 
-api_out(200, ['ok' => true, 'imported' => count($workouts), 'step_samples' => count($steps)]);
+api_out(200, ['ok' => true, 'imported' => count($workouts), 'metric_samples' => count($metricRows)]);

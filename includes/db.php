@@ -60,16 +60,27 @@ function varos_db(): PDO
     ');
     $pdo->exec('CREATE INDEX IF NOT EXISTS idx_workouts_date ON workouts (workout_date)');
 
-    // Βήματα: ένα δείγμα ανά χρονική στιγμή (ημερήσιο ή ωριαίο, ανάλογα με τον συγκεντρωτικό τρόπο του export).
-    // Το κλειδί είναι η στιγμή του δείγματος, ώστε η επαναποστολή να μην διπλομετράει.
+    // Μετρήσεις Υγείας (Health Auto Export → Health Metrics): μία γραμμή ανά μετρική / χρονική στιγμή / πεδίο.
+    // Το κλειδί περιλαμβάνει τη στιγμή του δείγματος, ώστε η επαναποστολή να μην διπλομετράει.
     $pdo->exec('
-        CREATE TABLE IF NOT EXISTS step_samples (
-            sample_ts TEXT PRIMARY KEY,
+        CREATE TABLE IF NOT EXISTS health_metrics (
+            metric TEXT NOT NULL,
+            ts TEXT NOT NULL,
             day TEXT NOT NULL,
-            steps REAL NOT NULL
-        )
+            field TEXT NOT NULL,
+            value REAL NOT NULL,
+            units TEXT,
+            PRIMARY KEY (metric, ts, field)
+        ) WITHOUT ROWID
     ');
-    $pdo->exec('CREATE INDEX IF NOT EXISTS idx_step_samples_day ON step_samples (day)');
+    $pdo->exec('CREATE INDEX IF NOT EXISTS idx_health_metrics_day ON health_metrics (day)');
+
+    // Μετανάστευση από τον παλιό πίνακα βημάτων.
+    if ($pdo->query("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'step_samples'")->fetchColumn()) {
+        $pdo->exec("INSERT OR IGNORE INTO health_metrics (metric, ts, day, field, value, units)
+                    SELECT 'step_count', sample_ts, day, 'qty', steps, 'count' FROM step_samples");
+        $pdo->exec('DROP TABLE step_samples');
+    }
 
     // Μετανάστευση: νέες στήλες στον πίνακα ρυθμίσεων (κλειδί API + τελευταίος συγχρονισμός).
     $cols = array_column($pdo->query('PRAGMA table_info(settings)')->fetchAll(PDO::FETCH_ASSOC), 'name');

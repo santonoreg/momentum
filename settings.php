@@ -7,7 +7,7 @@ varos_require_admin('settings.php');
 $settings = varos_get_settings();
 $entries = get_entries();
 $workoutCount = count_workouts();
-$stepDayCount = count_step_days();
+$metricCount = count_metric_types();
 $endpoint = app_base_url() . '/api/health.php';
 $token = (string)($settings['api_token'] ?? '');
 $isHttps = str_starts_with($endpoint, 'https://');
@@ -132,7 +132,7 @@ require __DIR__ . '/includes/header.php';
     </div>
     <div>
       <div class="l"><?= te('health.steps_imported') ?></div>
-      <div class="v"><?= (int)$stepDayCount ?></div>
+      <div class="v"><?= (int)$metricCount ?></div>
     </div>
   </div>
 
@@ -151,7 +151,7 @@ require __DIR__ . '/includes/header.php';
 <div class="form-card">
   <p style="margin:0 0 4px;font-size:13px;color:var(--ink-soft);"><?= te('data.weight_count', ['n' => count($entries)]) ?></p>
   <p style="margin:0 0 4px;font-size:13px;color:var(--ink-soft);"><?= te('data.workout_count', ['n' => $workoutCount]) ?></p>
-  <p style="margin:0 0 10px;font-size:13px;color:var(--ink-soft);"><?= te('data.step_days', ['n' => $stepDayCount]) ?></p>
+  <p style="margin:0 0 10px;font-size:13px;color:var(--ink-soft);"><?= te('data.metric_types', ['n' => $metricCount]) ?></p>
   <a class="btn secondary" href="logbook.php"><?= te('data.open_log') ?></a>
 </div>
 
