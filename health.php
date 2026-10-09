@@ -87,6 +87,9 @@ require __DIR__ . '/includes/header.php';
     <div class="chip">
       <div class="chip-value"><?= e($h['latest_text']) ?></div>
       <div class="chip-label"><?= e($h['label']) ?></div>
+      <?php if ($h['latest_day']): ?>
+      <div class="chip-sub"><?= e($h['latest_day'] === $today ? t('days.today') : ($h['latest_day'] === $yesterday ? t('days.yesterday') : fmt_date($h['latest_day']))) ?></div>
+      <?php endif; ?>
     </div>
     <?php endforeach; ?>
   </div>

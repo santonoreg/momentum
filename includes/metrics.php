@@ -232,6 +232,7 @@ function metric_value_text(float $v, string $units, bool $isSleep): string
     if ($isSleep) {
         return fmt_duration($v * 60);
     }
+    $units = str_replace('count/min', 'bpm', $units);
     $unit = in_array(strtolower($units), ['', 'count'], true) ? '' : ' ' . $units;
     return metric_fmt($v) . $unit;
 }
