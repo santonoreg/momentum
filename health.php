@@ -58,6 +58,15 @@ $lastSync = !empty($settings['last_sync_at'])
     ? fmt_date(substr($settings['last_sync_at'], 0, 10)) . ' ' . substr($settings['last_sync_at'], 11, 5)
     : null;
 
+// Παλιός συγχρονισμός: οι τιμές των τελευταίων ωρών/ημερών μπορεί να είναι ελλιπείς.
+$staleHours = null;
+if (!empty($settings['last_sync_at'])) {
+    $ls = strtotime($settings['last_sync_at']);
+    if ($ls && (time() - $ls) > 6 * 3600) {
+        $staleHours = (int)floor((time() - $ls) / 3600);
+    }
+}
+
 $pageTitle = t('dash.title');
 $activeTab = 'health';
 $needsChart = true;
@@ -73,6 +82,10 @@ require __DIR__ . '/includes/header.php';
     <a class="btn" href="settings.php#health"><?= te('exercise.go_setup') ?></a>
   </div>
 <?php else: ?>
+
+<?php if ($staleHours !== null): ?>
+  <div class="flash error"><?= te('dash.stale', ['when' => $lastSync, 'h' => $staleHours >= 48 ? intdiv($staleHours, 24) . ' ' . t('dash.days') : $staleHours . ' ' . t('dash.hours')]) ?></div>
+<?php endif; ?>
 
 <div class="range-switch">
   <?php foreach ($rangeOptions as $r): ?>
