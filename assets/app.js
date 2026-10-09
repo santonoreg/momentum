@@ -67,6 +67,52 @@
     }
   });
 
+  // ---------- Πληροφορίες μετρικής: popup με κλικ / hover / πληκτρολόγιο ----------
+  (function () {
+    function pop(btn) { var c = btn.closest('.metric-card'); return c ? c.querySelector('.info-pop') : null; }
+    function setOpen(btn, open) {
+      var p = pop(btn);
+      if (!p) return;
+      p.hidden = !open;
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+    var hoverCap = !!(window.matchMedia && window.matchMedia('(hover: hover)').matches);
+    function closeAll(except) {
+      document.querySelectorAll('.info-btn[aria-expanded="true"]').forEach(function (b) {
+        if (b !== except) { b.removeAttribute('data-pinned'); setOpen(b, false); }
+      });
+    }
+    document.addEventListener('click', function (e) {
+      var btn = e.target.closest('.info-btn');
+      if (btn) {
+        // Με ποντίκι το hover έχει ήδη ανοίξει το popup: το κλικ το «καρφώνει» ή το κλείνει αν ήταν ήδη καρφωμένο
+        var pinned = btn.getAttribute('data-pinned') === '1';
+        var open = hoverCap ? !pinned : btn.getAttribute('aria-expanded') !== 'true';
+        closeAll(btn);
+        if (open) { btn.setAttribute('data-pinned', '1'); } else { btn.removeAttribute('data-pinned'); }
+        setOpen(btn, open);
+        return;
+      }
+      if (!e.target.closest('.info-pop')) closeAll(null);
+    });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeAll(null); });
+    if (hoverCap) {
+      document.querySelectorAll('.info-btn').forEach(function (b) {
+        b.addEventListener('mouseenter', function () { closeAll(b); setOpen(b, true); });
+        b.addEventListener('mouseleave', function () { setTimeout(function () {
+          var p = pop(b);
+          if (p && !p.matches(':hover') && b.getAttribute('data-pinned') !== '1') setOpen(b, false);
+        }, 120); });
+      });
+      document.querySelectorAll('.info-pop').forEach(function (p) {
+        p.addEventListener('mouseleave', function () {
+          var b = p.closest('.metric-card').querySelector('.info-btn');
+          if (b && b.getAttribute('data-pinned') !== '1') setOpen(b, false);
+        });
+      });
+    }
+  })();
+
   // ---------- Επιβεβαίωση διαγραφής ----------
   document.addEventListener('submit', function (e) {
     if (e.target.matches('[data-confirm]')) {

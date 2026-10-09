@@ -101,7 +101,7 @@ require __DIR__ . '/includes/header.php';
     <?php foreach ($byGroup[$g] as $c): ?>
     <div class="metric-card">
       <div class="mc-head">
-        <div class="mc-title"><?= e($c['label']) ?></div>
+        <div class="mc-title"><?= e($c['label']) ?><?php if (t_has('hi.' . $c['metric'])): ?><button type="button" class="info-btn" aria-label="<?= te('hi.aria') ?>" aria-expanded="false">i</button><?php endif; ?></div>
         <div class="mc-latest"><?= $c['latest_text'] !== null ? e($c['latest_text']) : '—' ?></div>
       </div>
       <div class="mc-sub">
@@ -111,6 +111,9 @@ require __DIR__ . '/includes/header.php';
         <?php else: ?>&nbsp;<?php endif; ?>
       </div>
       <div class="mc-chart"><canvas id="<?= e($c['id']) ?>"></canvas></div>
+      <?php if (t_has('hi.' . $c['metric'])): ?>
+      <div class="info-pop" role="tooltip" hidden><?= e(t('hi.' . $c['metric'])) ?><span class="info-disc"><?= te('hi.disclaimer') ?></span></div>
+      <?php endif; ?>
     </div>
     <?php endforeach; ?>
   </div>
