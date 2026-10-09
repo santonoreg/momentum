@@ -37,7 +37,16 @@ $__dayName = t('day.' . (int)$__headerToday->format('w'));
 <div class="app">
   <header class="topbar">
     <div class="topbar-title"><?= te('app.name') ?></div>
-    <div class="topbar-date"><?= e($__dayName) ?>, <?= e(fmt_date($__headerToday->format('Y-m-d'))) ?></div>
+    <div class="topbar-right">
+      <div class="topbar-date"><?= e($__dayName) ?>, <?= e(fmt_date($__headerToday->format('Y-m-d'))) ?></div>
+<?php if (!empty($topbarAdd)): $__plus = '<svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>'; ?>
+<?php if (varos_is_admin()): ?>
+      <button type="button" class="topbar-add" data-open-modal="entry-modal" aria-label="<?= te('entry.new') ?>"><?= $__plus ?></button>
+<?php else: ?>
+      <a class="topbar-add" href="login.php?redirect=<?= e(urlencode($topbarAdd)) ?>" aria-label="<?= te('login.title') ?>"><?= $__plus ?></a>
+<?php endif; ?>
+<?php endif; ?>
+    </div>
   </header>
 
   <main class="content">

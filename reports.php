@@ -92,6 +92,7 @@ $bmiCat = $bmi !== null ? bmi_category_for($bmi) : null;
 
 $qs = fn(array $over) => '?' . http_build_query(array_merge(['metric' => $metric, 'range' => $range], $over));
 
+$topbarAdd = 'reports.php';
 $pageTitle = t('reports.title');
 $activeTab = 'reports';
 $needsChart = true;

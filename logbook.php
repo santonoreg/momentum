@@ -7,6 +7,7 @@ $today = date('Y-m-d');
 $isAdmin = varos_is_admin();
 $yesterday = date('Y-m-d', strtotime('-1 day'));
 
+$topbarAdd = 'logbook.php';
 $pageTitle = t('log.title');
 $activeTab = 'logbook';
 require __DIR__ . '/includes/header.php';

@@ -1,15 +1,11 @@
 <?php
 /**
- * Κουμπί «+» και φόρμα καταχώρησης βάρους.
+ * Φόρμα καταχώρησης βάρους (το κουμπί «+» βρίσκεται στην πάνω μπάρα, βλ. header.php).
  * @var string $modalRedirect  σελίδα επιστροφής μετά την αποθήκευση
  * @var string $today          σημερινή ημερομηνία (Y-m-d)
  */
 ?>
 <?php if (varos_is_admin()): ?>
-<button class="fab" data-open-modal="entry-modal" aria-label="<?= te('entry.new') ?>">
-  <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
-</button>
-
 <div class="modal-backdrop" id="entry-modal">
   <div class="modal-sheet" data-title-new="<?= te('entry.new') ?>" data-title-edit="<?= te('entry.edit') ?>">
     <h3><?= te('entry.new') ?></h3>
@@ -37,8 +33,4 @@
     </form>
   </div>
 </div>
-<?php else: ?>
-<a class="fab" href="login.php?redirect=<?= e(urlencode($modalRedirect)) ?>" aria-label="<?= te('login.title') ?>">
-  <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
-</a>
 <?php endif; ?>
