@@ -21,7 +21,7 @@ Plain PHP 8 + SQLite — no build step, no dependencies to install.
 On first visit the app asks you to set a **password** (setup screen); nothing else works until it is set,
 so do it right after deploying — whoever opens the page first can set it.
 
-- Anyone can **view** Stats, Exercise and Log.
+- Anyone can **view** Stats, Health and Log. The "+" button is always visible; when logged out it opens the login page.
 - **Logging in** is required for Settings, adding/editing/deleting weight, changing the goal,
   and the Apple Health key. Sessions last 30 days and are stored in `data/sessions/`.
 - The Apple Health sync endpoint uses its own access key and does not need a login.
@@ -54,7 +54,7 @@ the data by itself. Instead, an iPhone app **pushes** your workouts to this app:
    - Method: `POST`, format: `JSON`
    - Header: `Authorization: Bearer <your access key>`
    - Data: **Workouts**, with your preferred schedule
-4. Run a manual export to test. Workouts appear in the **Exercise** tab.
+4. Run a manual export to test. Workouts appear in the **Health** tab.
 
 Re-sending the same workout is safe: entries are de-duplicated by workout id.
 
