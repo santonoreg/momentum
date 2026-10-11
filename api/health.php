@@ -33,6 +33,7 @@ function sync_log(int $code, array $data): void
             'note' => $GLOBALS['sync_note'],
             'body_bytes' => strlen($raw),
             'top_keys' => $keys,
+            'metrics' => is_array($json) ? array_slice(payload_metric_names($json), 0, 40) : [],
             'body_start' => substr($raw, 0, 600),
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE | JSON_PARTIAL_OUTPUT_ON_ERROR);
         $lines = is_file($file) ? file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) : [];
