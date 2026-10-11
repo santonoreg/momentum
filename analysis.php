@@ -6,6 +6,7 @@ require_once __DIR__ . '/includes/functions.php';
 $isAdmin = varos_is_admin();
 $aiHasKey = ai_get_key() !== '';
 $aiReports = ai_all_reports();
+$aiPeriod = ai_period();
 $aiSched = $aiHasKey ? ai_schedule() : null;
 $aiEarly = $aiSched !== null && !$aiSched['is_due'];
 $aiWhen = '';
@@ -30,8 +31,19 @@ require __DIR__ . '/includes/header.php';
     <span class="ai-spark" aria-hidden="true">✦</span>
     <div>
       <div class="ai-title"><?= te('ai.title') ?></div>
-      <div class="ai-sub"><?= te('ai.sub', ['model' => 'Claude Opus 5.5', 'n' => AI_PERIOD_DAYS]) ?></div>
+      <div class="ai-sub"><?= te('ai.sub', ['model' => 'Claude Opus 5.5', 'n' => $aiPeriod]) ?></div>
     </div>
+  </div>
+
+  <div class="ai-freq">
+    <span class="ai-freq-label"><?= te('ai.freq_label') ?></span>
+    <form method="post" action="actions.php" class="ai-seg">
+      <input type="hidden" name="action" value="set_ai_period">
+      <input type="hidden" name="redirect" value="analysis.php">
+      <?php foreach (AI_PERIODS as $pd): ?>
+        <button type="submit" name="period" value="<?= (int)$pd ?>" class="<?= $aiPeriod === $pd ? 'is-active' : '' ?>"<?= $isAdmin ? '' : ' disabled' ?>><?= te('ai.freq_' . $pd) ?></button>
+      <?php endforeach; ?>
+    </form>
   </div>
 
   <?php if ($aiErrorKey !== null): ?>
@@ -48,7 +60,13 @@ require __DIR__ . '/includes/header.php';
       <?php foreach ($aiReports as $i => $rep):
         $score = $rep['score'] !== null ? (int)$rep['score'] : null;
         $band = ai_score_band($score);
-        $older = $aiReports[$i + 1] ?? null;
+        $older = null;
+        for ($j = $i + 1; $j < count($aiReports); $j++) {
+            if ((int)$aiReports[$j]['days'] === (int)$rep['days']) {
+                $older = $aiReports[$j];
+                break;
+            }
+        }
         $delta = ($score !== null && $older && $older['score'] !== null) ? $score - (int)$older['score'] : null;
       ?>
       <details class="ai-report" data-band="<?= e($band[0]) ?>"<?= $i === 0 ? ' open' : '' ?>>
@@ -57,6 +75,7 @@ require __DIR__ . '/includes/header.php';
           <span class="ai-sum">
             <span class="ai-line1">
               <span class="ai-date"><?= e(fmt_date(substr($rep['created_at'], 0, 10))) ?></span>
+              <span class="ai-badge"><?= te('ai.period_badge', ['n' => (int)$rep['days']]) ?></span>
               <span class="ai-verdict"><?= te($band[2]) ?></span>
               <?php if ($delta !== null && $delta !== 0): ?><span class="ai-delta <?= $delta > 0 ? 'up' : 'down' ?>"><?= $delta > 0 ? '▲ +' : '▼ −' ?><?= abs($delta) ?></span><?php endif; ?>
             </span>
@@ -68,6 +87,14 @@ require __DIR__ . '/includes/header.php';
             'when' => fmt_date(substr($rep['created_at'], 0, 10)) . ' ' . substr($rep['created_at'], 11, 5),
             'cost' => number_format(ai_cost_usd($rep), 2, '.', ''),
         ]) ?></div>
+        <?php if ($isAdmin): ?>
+        <form method="post" action="actions.php" class="ai-del" data-confirm="<?= te('ai.delete_confirm', ['date' => fmt_date(substr($rep['created_at'], 0, 10))]) ?>">
+          <input type="hidden" name="action" value="delete_ai_report">
+          <input type="hidden" name="id" value="<?= (int)$rep['id'] ?>">
+          <input type="hidden" name="redirect" value="analysis.php">
+          <button type="submit" class="ai-del-btn"><?= te('ai.delete') ?></button>
+        </form>
+        <?php endif; ?>
       </details>
       <?php endforeach; ?>
     </div>
@@ -92,9 +119,8 @@ require __DIR__ . '/includes/header.php';
   <?php else: ?>
     <form method="post" action="actions.php" data-busy="<?= te('ai.busy') ?>"<?= $aiEarly ? ' data-confirm="' . te('ai.early_confirm', ['when' => $aiWhen, 'period' => $aiSched['period'], 'date' => fmt_date($aiSched['due'])]) . '"' : '' ?>>
       <input type="hidden" name="action" value="ai_report">
-      <input type="hidden" name="range" value="<?= (int)$range ?>">
-      <input type="hidden" name="redirect" value="health.php">
-      <button type="submit" class="btn <?= $aiEarly ? 'secondary' : 'ai-btn' ?>"><?= te($aiSched ? 'ai.btn_new' : 'ai.btn_first') ?></button>
+      <input type="hidden" name="redirect" value="analysis.php">
+      <button type="submit" class="btn <?= $aiEarly ? 'secondary' : 'ai-btn' ?>"><?= te($aiSched ? 'ai.btn_new' : 'ai.btn_first_n', ['n' => $aiPeriod]) ?></button>
     </form>
   <?php endif; ?>
   <p class="hint"><?= te('ai.sends') ?> <?= te('ai.disclaimer') ?></p>

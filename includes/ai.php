@@ -8,7 +8,8 @@ declare(strict_types=1);
 
 const AI_MODEL = 'claude-opus-5-5';
 const AI_MAX_TOKENS = 6000;
-const AI_PERIOD_DAYS = 30;        // κάθε αναφορά καλύπτει τις τελευταίες 30 ημέρες (ανεξάρτητα από το διάστημα της σελίδας)
+const AI_PERIODS = [7, 30];       // επιτρεπόμενες συχνότητες αναφορών: εβδομαδιαία / μηνιαία (σε ημέρες)
+const AI_DEFAULT_PERIOD = 30;
 const AI_DAILY_LIMIT = 3;         // ασφάλεια κόστους: μέγιστες αναφορές ανά ημέρα
 const AI_PRICE_IN = 4.0;          // $ ανά 1M tokens εισόδου (εκτίμηση για την ένδειξη κόστους)
 const AI_PRICE_OUT = 20.0;        // $ ανά 1M tokens εξόδου
@@ -25,6 +26,25 @@ function ai_sdk_loaded(): bool
         require_once $autoload;
     }
     return $loaded = class_exists('Anthropic\\Client');
+}
+
+/** Η επιλεγμένη συχνότητα αναφορών (7 ή 30 ημέρες). */
+function ai_period(): int
+{
+    $p = (int)(varos_get_settings()['ai_period'] ?? 0);
+    return in_array($p, AI_PERIODS, true) ? $p : AI_DEFAULT_PERIOD;
+}
+
+function ai_set_period(int $days): void
+{
+    if (in_array($days, AI_PERIODS, true)) {
+        varos_db()->prepare('UPDATE settings SET ai_period = :p WHERE id = 1')->execute([':p' => $days]);
+    }
+}
+
+function ai_delete_report(int $id): void
+{
+    varos_db()->prepare('DELETE FROM ai_reports WHERE id = :id')->execute([':id' => $id]);
 }
 
 function ai_get_key(): string
@@ -205,9 +225,19 @@ function _ai_cut(string $s, int $n): string
 }
 
 /** Οι τελευταίες αναφορές (για συνέχεια): ημερομηνία, διάστημα, κείμενο (κομμένο). */
-function ai_previous_reports(int $limit = 2): array
+function ai_previous_reports(int $limit = 2, ?int $days = null): array
 {
-    $rows = varos_db()->query('SELECT created_at, days, content, score FROM ai_reports ORDER BY created_at DESC, id DESC LIMIT ' . (int)$limit)->fetchAll(PDO::FETCH_ASSOC);
+    $rows = [];
+    if ($days !== null) {
+        // Πρώτα οι αναφορές της ίδιας συχνότητας, ώστε η σύγκριση να είναι «μήλα με μήλα»
+        $stmt = varos_db()->prepare('SELECT created_at, days, content, score FROM ai_reports WHERE days = :d ORDER BY created_at DESC, id DESC LIMIT ' . (int)$limit);
+        $stmt->execute([':d' => $days]);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    if (!$rows) {
+        // Αν δεν υπάρχει καμία της ίδιας συχνότητας, δίνουμε την πιο πρόσφατη οποιασδήποτε ως ευρύτερο πλαίσιο
+        $rows = varos_db()->query('SELECT created_at, days, content, score FROM ai_reports ORDER BY created_at DESC, id DESC LIMIT 1')->fetchAll(PDO::FETCH_ASSOC);
+    }
     $out = [];
     foreach ($rows as $r) {
         $out[] = [
@@ -304,7 +334,7 @@ function ai_collect_stats(int $days): array
     if (($prev = ai_collect_previous_period($days)) !== null) {
         $out['previous_period'] = $prev;
     }
-    if (($reports = ai_previous_reports(2)) !== []) {
+    if (($reports = ai_previous_reports(2, $days)) !== []) {
         $out['previous_reports'] = $reports;
     }
     return $out;
@@ -470,7 +500,9 @@ function ai_generate_report(int $days, string $lang): array
  */
 function ai_schedule(): ?array
 {
-    $r = varos_db()->query('SELECT created_at, days FROM ai_reports ORDER BY created_at DESC, id DESC LIMIT 1')->fetch(PDO::FETCH_ASSOC);
+    $stmt = varos_db()->prepare('SELECT created_at, days FROM ai_reports WHERE days = :d ORDER BY created_at DESC, id DESC LIMIT 1');
+    $stmt->execute([':d' => ai_period()]);
+    $r = $stmt->fetch(PDO::FETCH_ASSOC);
     if (!$r) {
         return null;
     }

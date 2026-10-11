@@ -115,10 +115,10 @@ composer install --no-dev      # in the app folder, once (and after `git pull` i
 ```
 
 Then log in, open **Settings → AI analysis** and paste the API key (stored in the SQLite database, never shown again).
-Each report covers the last 30 days (independent of the range selected on the page) and is compared with the previous 30 days;
-the last two saved reports are sent too, so the assistant can check how earlier recommendations worked out.
+Each report covers the last 7 (weekly) or 30 (monthly) days, as chosen on the Reports tab, and is compared with the same-length period right before it;
+the last two saved reports of the same frequency are sent too, so the assistant can check how earlier recommendations worked out.
 Claude also returns a 0–100 score; reports are listed on every range with a colour per score band (excellent / good / mixed / needs attention / concerning)
-and the change since the previous report. A new report is suggested once 30 days have passed.
+and the change since the previous report. A new report is suggested once a full period has passed; reports can be deleted.
 Only daily totals/averages are sent — never the per-minute samples or the ECG. Reports are saved, a new one is created
 only when you press the button, and at most 10 reports per day are allowed. Requires PHP 8.1+ with the `curl` extension.
 

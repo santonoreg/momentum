@@ -161,13 +161,30 @@ switch ($action) {
         varos_require_admin($redirect);
         @set_time_limit(240);
         ignore_user_abort(true); // αν κοπεί η σύνδεση/proxy, η αναφορά ολοκληρώνεται και αποθηκεύεται
-        $res = ai_generate_report(AI_PERIOD_DAYS, varos_lang());
+        $res = ai_generate_report(ai_period(), varos_lang());
         $to = 'analysis.php';
         if ($res['ok']) {
             back($to, 'aidone');
         }
         $_SESSION['ai_error'] = $res['error'] ?? 'api';
         back($to, 'aierror');
+        break;
+    }
+
+    case 'set_ai_period': {
+        varos_require_admin($redirect);
+        ai_set_period((int)($_POST['period'] ?? 0));
+        back('analysis.php', 'saved');
+        break;
+    }
+
+    case 'delete_ai_report': {
+        varos_require_admin($redirect);
+        $id = (int)($_POST['id'] ?? 0);
+        if ($id > 0) {
+            ai_delete_report($id);
+        }
+        back('analysis.php', 'deleted');
         break;
     }
 

@@ -104,6 +104,9 @@ function varos_db(): PDO
     if (!in_array('entry_code_hash', $cols, true)) {
         $pdo->exec('ALTER TABLE settings ADD COLUMN entry_code_hash TEXT');
     }
+    if (!in_array('ai_period', $cols, true)) {
+        $pdo->exec('ALTER TABLE settings ADD COLUMN ai_period INTEGER');
+    }
     if (!in_array('anthropic_key', $cols, true)) {
         $pdo->exec('ALTER TABLE settings ADD COLUMN anthropic_key TEXT');
     }
