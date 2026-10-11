@@ -8,6 +8,9 @@ declare(strict_types=1);
  */
 require_once __DIR__ . '/../includes/functions.php';
 
+// Μεγάλα payload (ECG, λεπτομερείς μετρήσεις) αποκωδικοποιούνται σε πολλή μνήμη.
+@ini_set('memory_limit', '512M');
+
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 
@@ -18,8 +21,8 @@ function sync_log(int $code, array $data): void
     try {
         $file = __DIR__ . '/../data/sync.log';
         $keys = [];
-        $raw = $GLOBALS['sync_raw'] ?? '';
-        $json = $raw !== '' ? json_decode($raw, true) : null;
+        // Χρησιμοποιούμε το ήδη αποκωδικοποιημένο JSON — δεύτερη αποκωδικοποίηση διπλασίαζε τη μνήμη.
+        $json = $GLOBALS['sync_json'] ?? null;
         if (is_array($json)) {
             $keys = array_slice(array_keys($json), 0, 8);
             if (isset($json['data']) && is_array($json['data'])) {
@@ -31,10 +34,10 @@ function sync_log(int $code, array $data): void
             'http' => $code,
             'result' => $data,
             'note' => $GLOBALS['sync_note'],
-            'body_bytes' => strlen($raw),
+            'body_bytes' => (int)($GLOBALS['sync_len'] ?? 0),
             'top_keys' => $keys,
             'metrics' => is_array($json) ? array_slice(payload_metric_names($json), 0, 40) : [],
-            'body_start' => substr($raw, 0, 600),
+            'body_start' => (string)($GLOBALS['sync_head'] ?? ''),
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE | JSON_PARTIAL_OUTPUT_ON_ERROR);
         $lines = is_file($file) ? file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) : [];
         $lines[] = $line;
@@ -79,7 +82,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
 }
 
 $raw = file_get_contents('php://input', false, null, 0, 8 * 1024 * 1024 + 1);
-$GLOBALS['sync_raw'] = $raw === false ? '' : $raw;
+$GLOBALS['sync_len'] = $raw === false ? 0 : strlen($raw);
+$GLOBALS['sync_head'] = $raw === false ? '' : substr($raw, 0, 600);
 
 $given = '';
 if (preg_match('/^Bearer\s+(\S+)/i', request_header('Authorization'), $m)) {
@@ -101,10 +105,12 @@ if ($raw === false || $raw === '' || strlen($raw) > 8 * 1024 * 1024) {
     api_out(400, ['ok' => false, 'error' => 'Empty or too large body']);
 }
 $json = json_decode($raw, true);
+$raw = null; // το ακατέργαστο σώμα δεν χρειάζεται πια — ελευθερώνουμε μνήμη
 if (!is_array($json)) {
     api_out(400, ['ok' => false, 'error' => 'Body is not valid JSON']);
 }
 
+$GLOBALS['sync_json'] = &$json;
 $workouts = parse_health_payload($json);
 $metricRows = parse_health_metrics($json);
 $records = parse_health_records($json);
