@@ -73,6 +73,10 @@ $aiHasKey = ai_get_key() !== '';
 $aiReport = ai_latest_report($range);
 $aiSched = $aiHasKey ? ai_schedule() : null;
 $aiEarly = $aiSched !== null && !$aiSched['is_due'];
+$aiWhen = '';
+if ($aiSched !== null) {
+    $aiWhen = $aiSched['age'] <= 0 ? t('ai.when_today') : ($aiSched['age'] === 1 ? t('ai.when_yesterday') : t('ai.when_ago', ['n' => $aiSched['age']]));
+}
 $aiErrorKey = null;
 if (($_GET['flash'] ?? '') === 'aierror' && $isAdmin) {
     $aiErrorKey = (string)($_SESSION['ai_error'] ?? 'api');
@@ -146,7 +150,7 @@ require __DIR__ . '/includes/header.php';
   <?php if ($aiSched !== null): ?>
     <div class="ai-next <?= $aiSched['is_due'] ? 'is-due' : '' ?>">
       <?php if ($aiSched['is_due']): ?>
-        <?= te('ai.due_now', ['n' => $aiSched['period']]) ?>
+        <?= te('ai.due_now', ['when' => $aiWhen]) ?>
       <?php else: ?>
         <?= te('ai.next', ['date' => fmt_date($aiSched['due']), 'n' => $aiSched['days_left']]) ?>
       <?php endif; ?>
@@ -158,7 +162,7 @@ require __DIR__ . '/includes/header.php';
   <?php elseif ($isAdmin && !ai_sdk_loaded()): ?>
     <div class="flash error"><?= te('ai.err.no_sdk') ?></div>
   <?php else: ?>
-    <form method="post" action="actions.php" data-busy="<?= te('ai.busy') ?>"<?= $aiEarly ? ' data-confirm="' . te('ai.early_confirm', ['age' => $aiSched['age'], 'period' => $aiSched['period'], 'date' => fmt_date($aiSched['due'])]) . '"' : '' ?>>
+    <form method="post" action="actions.php" data-busy="<?= te('ai.busy') ?>"<?= $aiEarly ? ' data-confirm="' . te('ai.early_confirm', ['when' => $aiWhen, 'period' => $aiSched['period'], 'date' => fmt_date($aiSched['due'])]) . '"' : '' ?>>
       <input type="hidden" name="action" value="ai_report">
       <input type="hidden" name="days" value="<?= (int)$range ?>">
       <input type="hidden" name="redirect" value="health.php">
