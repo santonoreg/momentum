@@ -84,51 +84,22 @@ function _ai_series_stats(array $byDay): array
     ];
 }
 
-function ai_collect_stats(int $days): array
+/** Στατιστικά μετρικών (εκτός ύπνου) από δεδομένα metrics_daily. $excludeDay: αποκλείεται για αθροιστικές (ημιτελής ημέρα). */
+function _ai_build_metrics(array $data, array $units, ?string $excludeDay): array
 {
-    $today = date('Y-m-d');
-    $from = date('Y-m-d', strtotime('-' . ($days - 1) . ' days'));
-    $settings = varos_get_settings();
-    $entries = get_entries();
-    $progress = compute_progress($settings, $entries);
-    $height = $settings['height_cm'] !== null ? (float)$settings['height_cm'] : null;
-    $current = $progress['current_weight'];
-
-    $out = [
-        'period' => ['from' => $from, 'to' => $today, 'days' => $days,
-            'note' => 'Cumulative metrics (steps, energy, distance...) exclude today because the day is incomplete.'],
-        'profile' => [
-            'height_cm' => $height,
-            'start_weight_kg' => $settings['start_weight'] !== null ? (float)$settings['start_weight'] : null,
-            'goal_weight_kg' => $settings['goal_weight'] !== null ? (float)$settings['goal_weight'] : null,
-            'current_weight_kg' => $current,
-            'bmi' => ($current !== null && $height) ? round(calc_bmi((float)$current, $height), 1) : null,
-        ],
-    ];
-
-    $w = [];
-    foreach ($entries as $e) {
-        if ($e['entry_date'] >= $from) {
-            $w[] = ['d' => $e['entry_date'], 'kg' => (float)$e['weight']];
-        }
-    }
-    $out['weight_entries'] = array_slice($w, -40);
-
-    // --- μετρήσεις υγείας
-    [$data, $units] = metrics_daily($days);
     $metrics = [];
     foreach ($data as $name => $fields) {
+        if ($name === 'sleep_analysis') {
+            continue;
+        }
         [, $agg] = metric_info($name);
         $isSum = $agg === 'sum';
-        $clean = function (array $byDay) use ($isSum, $today): array {
-            if ($isSum) {
-                unset($byDay[$today]);
+        $clean = function (array $byDay) use ($isSum, $excludeDay): array {
+            if ($isSum && $excludeDay !== null) {
+                unset($byDay[$excludeDay]);
             }
             return $byDay;
         };
-        if ($name === 'sleep_analysis') {
-            continue; // χειρισμός παρακάτω
-        }
         $unit = str_replace('count/min', 'bpm', (string)($units[$name] ?? ''));
         $m = ['label' => metric_label($name), 'unit' => $unit, 'kind' => $isSum ? 'daily_total' : 'daily_average'];
         if (isset($fields['qty'])) {
@@ -163,37 +134,124 @@ function ai_collect_stats(int $days): array
         }
         $metrics[$name] = $m;
     }
-    $out['metrics'] = $metrics;
+    return $metrics;
+}
 
-    // --- ύπνος (ώρες)
-    if (!empty($data['sleep_analysis'])) {
-        $f = $data['sleep_analysis'];
-        $nights = [];
-        $allDays = [];
-        foreach ($f as $series) {
-            $allDays += array_fill_keys(array_keys($series), true);
-        }
-        foreach (array_keys($allDays) as $d) {
-            if (isset($f['totalsleep'][$d])) {
-                $nights[$d] = $f['totalsleep'][$d];
-            } elseif (isset($f['asleep'][$d]) && $f['asleep'][$d] > 0) {
-                $nights[$d] = $f['asleep'][$d];
-            } else {
-                $s = ($f['deep'][$d] ?? 0) + ($f['core'][$d] ?? 0) + ($f['rem'][$d] ?? 0);
-                if ($s > 0) {
-                    $nights[$d] = $s;
-                }
+/** Ύπνος (ώρες ανά νύχτα) από δεδομένα metrics_daily, ή null. */
+function _ai_build_sleep(array $data): ?array
+{
+    if (empty($data['sleep_analysis'])) {
+        return null;
+    }
+    $f = $data['sleep_analysis'];
+    $allDays = [];
+    foreach ($f as $series) {
+        $allDays += array_fill_keys(array_keys($series), true);
+    }
+    $nights = [];
+    foreach (array_keys($allDays) as $d) {
+        if (isset($f['totalsleep'][$d])) {
+            $nights[$d] = $f['totalsleep'][$d];
+        } elseif (isset($f['asleep'][$d]) && $f['asleep'][$d] > 0) {
+            $nights[$d] = $f['asleep'][$d];
+        } else {
+            $sum = ($f['deep'][$d] ?? 0) + ($f['core'][$d] ?? 0) + ($f['rem'][$d] ?? 0);
+            if ($sum > 0) {
+                $nights[$d] = $sum;
             }
         }
-        if ($nights) {
-            $sleep = ['unit' => 'hours'] + _ai_series_stats($nights);
-            foreach (['deep', 'core', 'rem', 'awake'] as $stage) {
-                if (!empty($f[$stage])) {
-                    $sleep['avg_' . $stage] = _ai_round(array_sum($f[$stage]) / count($f[$stage]));
-                }
-            }
-            $out['sleep'] = $sleep;
+    }
+    if (!$nights) {
+        return null;
+    }
+    $sleep = ['unit' => 'hours'] + _ai_series_stats($nights);
+    foreach (['deep', 'core', 'rem', 'awake'] as $stage) {
+        if (!empty($f[$stage])) {
+            $sleep['avg_' . $stage] = _ai_round(array_sum($f[$stage]) / count($f[$stage]));
         }
+    }
+    return $sleep;
+}
+
+/** Συμπαγής σύγκριση: μόνο ο μέσος όρος κάθε μετρικής στο προηγούμενο ίσο διάστημα. */
+function ai_collect_previous_period(int $days): ?array
+{
+    [$data, $units] = metrics_daily($days, $days);
+    if (!$data) {
+        return null;
+    }
+    $from = date('Y-m-d', strtotime('-' . (2 * $days - 1) . ' days'));
+    $to = date('Y-m-d', strtotime('-' . $days . ' days'));
+    $out = ['from' => $from, 'to' => $to, 'metrics_avg' => []];
+    foreach (_ai_build_metrics($data, $units, null) as $name => $m) {
+        if (isset($m['avg'])) {
+            $out['metrics_avg'][$name] = ['label' => $m['label'], 'unit' => $m['unit'], 'avg' => $m['avg'], 'days_with_data' => $m['days_with_data']];
+        }
+    }
+    if (($sleep = _ai_build_sleep($data)) !== null) {
+        $out['sleep_avg_hours'] = $sleep['avg'];
+    }
+    return $out['metrics_avg'] || isset($out['sleep_avg_hours']) ? $out : null;
+}
+
+/** Κόβει σε $n χαρακτήρες χωρίς να σπάει πολυbyte χαρακτήρας (ούτε εξαρτάται από mbstring). */
+function _ai_cut(string $s, int $n): string
+{
+    if (function_exists('mb_substr')) {
+        return mb_strlen($s) > $n ? mb_substr($s, 0, $n) . '…' : $s;
+    }
+    return preg_match('/^.{0,' . $n . '}/us', $s, $m) ? $m[0] . (strlen($m[0]) < strlen($s) ? '…' : '') : $s;
+}
+
+/** Οι τελευταίες αναφορές (για συνέχεια): ημερομηνία, διάστημα, κείμενο (κομμένο). */
+function ai_previous_reports(int $limit = 2): array
+{
+    $rows = varos_db()->query('SELECT created_at, days, content FROM ai_reports ORDER BY id DESC LIMIT ' . (int)$limit)->fetchAll(PDO::FETCH_ASSOC);
+    $out = [];
+    foreach ($rows as $r) {
+        $out[] = [
+            'created' => substr($r['created_at'], 0, 10),
+            'period_days' => (int)$r['days'],
+            'report' => _ai_cut((string)$r['content'], 3500),
+        ];
+    }
+    return $out;
+}
+
+function ai_collect_stats(int $days): array
+{
+    $today = date('Y-m-d');
+    $from = date('Y-m-d', strtotime('-' . ($days - 1) . ' days'));
+    $settings = varos_get_settings();
+    $entries = get_entries();
+    $progress = compute_progress($settings, $entries);
+    $height = $settings['height_cm'] !== null ? (float)$settings['height_cm'] : null;
+    $current = $progress['current_weight'];
+
+    $out = [
+        'period' => ['from' => $from, 'to' => $today, 'days' => $days,
+            'note' => 'Cumulative metrics (steps, energy, distance...) exclude today because the day is incomplete.'],
+        'profile' => [
+            'height_cm' => $height,
+            'start_weight_kg' => $settings['start_weight'] !== null ? (float)$settings['start_weight'] : null,
+            'goal_weight_kg' => $settings['goal_weight'] !== null ? (float)$settings['goal_weight'] : null,
+            'current_weight_kg' => $current,
+            'bmi' => ($current !== null && $height) ? round(calc_bmi((float)$current, $height), 1) : null,
+        ],
+    ];
+
+    $w = [];
+    foreach ($entries as $e) {
+        if ($e['entry_date'] >= $from) {
+            $w[] = ['d' => $e['entry_date'], 'kg' => (float)$e['weight']];
+        }
+    }
+    $out['weight_entries'] = array_slice($w, -40);
+
+    [$data, $units] = metrics_daily($days);
+    $out['metrics'] = _ai_build_metrics($data, $units, $today);
+    if (($sleep = _ai_build_sleep($data)) !== null) {
+        $out['sleep'] = $sleep;
     }
 
     // --- προπονήσεις
@@ -239,6 +297,14 @@ function ai_collect_stats(int $days): array
     if ($records) {
         $out['records'] = $records;
     }
+
+    // --- συνέχεια: σύγκριση με το προηγούμενο ίσο διάστημα και με τις προηγούμενες αναφορές
+    if (($prev = ai_collect_previous_period($days)) !== null) {
+        $out['previous_period'] = $prev;
+    }
+    if (($reports = ai_previous_reports(2)) !== []) {
+        $out['previous_reports'] = $reports;
+    }
     return $out;
 }
 
@@ -256,8 +322,10 @@ Rules:
 - This is general wellness information, not a diagnosis or medical advice. Do not name diseases as conclusions. If something is persistently outside typical ranges (resting heart rate, blood oxygen, blood pressure, an irregular ECG classification, breathing disturbances, very short sleep) say it is worth discussing with a doctor, without alarming the reader.
 - Be specific and practical: for every improvement give a concrete action, how to do it, and how to tell it worked.
 - Take the person's weight goal into account when it is provided.
+- Continuity: "previous_period" holds the averages of the equal-length period right before this one, and "previous_reports" holds your earlier reports (newest first, with their dates). When present, compare this period with the previous one and check what was recommended before against what the data now shows. Say plainly what improved, what got worse and what did not change. Do not repeat earlier advice word for word: if a recommendation still applies, say so briefly and make it more specific or give the next step. Never claim a recommendation was followed unless the data supports it.
 
 Format (Markdown, roughly 450-650 words), with these sections in this order:
+## Progress since the last report  (ONLY when previous_reports or previous_period are provided; 3-6 short bullets)
 ## Summary  (3-4 sentences)
 ## What is going well
 ## What to improve  (prioritised; for each: finding, why it matters, what to do)
@@ -272,7 +340,7 @@ TXT;
 function ai_user_message(array $stats): string
 {
     return "Here are my statistics as JSON. Please write my improvement report.\n\n"
-        . json_encode($stats, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+        . json_encode($stats, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_INVALID_UTF8_SUBSTITUTE);
 }
 
 function ai_reports_today(): int

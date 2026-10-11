@@ -221,13 +221,17 @@ function get_daily_steps(int $days = 30): array
  * Ημερήσιες τιμές ανά μετρική/πεδίο για τις τελευταίες $days ημέρες.
  * @return array{0:array,1:array} [ metric => field => day => value ], [ metric => units ]
  */
-function metrics_daily(int $days): array
+function metrics_daily(int $days, int $offsetDays = 0): array
 {
+    // $offsetDays = 0: οι τελευταίες $days ημέρες μέχρι σήμερα· $offsetDays = $days: το ίσο διάστημα ΠΡΙΝ από αυτό.
     $stmt = varos_db()->prepare('
         SELECT metric, field, day, SUM(value) AS s, AVG(value) AS a, MIN(value) AS mn, MAX(value) AS mx, MAX(units) AS u
-        FROM health_metrics WHERE day >= :since GROUP BY metric, field, day
+        FROM health_metrics WHERE day >= :since AND day <= :until GROUP BY metric, field, day
     ');
-    $stmt->execute([':since' => date('Y-m-d', strtotime('-' . ($days - 1) . ' days'))]);
+    $stmt->execute([
+        ':since' => date('Y-m-d', strtotime('-' . ($days - 1 + $offsetDays) . ' days')),
+        ':until' => date('Y-m-d', strtotime('-' . $offsetDays . ' days')),
+    ]);
     $data = [];
     $units = [];
     foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {

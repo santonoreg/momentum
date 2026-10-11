@@ -115,6 +115,8 @@ composer install --no-dev      # in the app folder, once (and after `git pull` i
 ```
 
 Then log in, open **Settings → AI analysis** and paste the API key (stored in the SQLite database, never shown again).
+Each report covers the last N days (the range selected on the page) and is compared with the previous period of the same length;
+the last two saved reports are sent too, so the assistant can check how earlier recommendations worked out.
 Only daily totals/averages are sent — never the per-minute samples or the ECG. Reports are saved, a new one is created
 only when you press the button, and at most 10 reports per day are allowed. Requires PHP 8.1+ with the `curl` extension.
 
