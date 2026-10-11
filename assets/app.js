@@ -129,6 +129,14 @@
     });
   };
 
+  // ---------- Φόρμες που αργούν (π.χ. ανάλυση AI): απενεργοποίηση κουμπιού + μήνυμα ----------
+  document.addEventListener('submit', function (e) {
+    var f = e.target;
+    if (!f.getAttribute || !f.hasAttribute('data-busy') || e.defaultPrevented) return;
+    var btn = f.querySelector('button[type="submit"]');
+    if (btn) { btn.textContent = f.getAttribute('data-busy'); setTimeout(function () { btn.disabled = true; }, 0); }
+  });
+
   // ---------- Επιβεβαίωση διαγραφής ----------
   document.addEventListener('submit', function (e) {
     if (e.target.matches('[data-confirm]')) {

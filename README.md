@@ -105,6 +105,19 @@ start time, type and duration.
 *Find Health Samples* (Workouts) → *Repeat with each* → build a dictionary with the
 fields above → *Get Contents of URL* (`POST`, JSON, `Authorization` header).
 
+## AI analysis (optional)
+
+The **Health** tab can ask Claude (Claude Opus 5.5) for an improvement report based on your statistics.
+It needs an Anthropic API key and the PHP SDK installed with Composer:
+
+```bash
+composer install --no-dev      # in the app folder, once (and after `git pull` if composer.json changed)
+```
+
+Then log in, open **Settings → AI analysis** and paste the API key (stored in the SQLite database, never shown again).
+Only daily totals/averages are sent — never the per-minute samples or the ECG. Reports are saved, a new one is created
+only when you press the button, and at most 10 reports per day are allowed. Requires PHP 8.1+ with the `curl` extension.
+
 ## Adding a language
 
 Copy `includes/lang/en.php` to `includes/lang/<code>.php`, translate the values, and add
@@ -118,6 +131,7 @@ actions.php                                                       form actions
 api/health.php                                                    Apple Health endpoint
 includes/                                                         db, helpers, i18n, layout
 includes/lang/                                                    translations
+composer.json                                                     PHP dependencies (vendor/ is git-ignored)
 assets/                                                           CSS + JS
 data/                                                             SQLite database (git-ignored)
 ```

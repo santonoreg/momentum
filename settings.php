@@ -93,6 +93,25 @@ require __DIR__ . '/includes/header.php';
   <p class="hint"><?= te('code.hint') ?></p>
 </div>
 
+<div class="section-title" id="ai"><?= te('ai.settings_title') ?></div>
+<div class="form-card">
+  <p class="para"><?= te('ai.settings_intro') ?></p>
+  <p class="hint" style="margin:0 0 12px;"><?= ai_get_key() !== '' ? te('ai.key_set', ['hint' => ai_key_hint()]) : te('ai.key_none') ?></p>
+  <form method="post" action="actions.php">
+    <input type="hidden" name="action" value="save_ai_key">
+    <input type="hidden" name="redirect" value="settings.php">
+    <div class="field">
+      <label for="ai_key"><?= te('ai.key_label') ?></label>
+      <input type="password" id="ai_key" name="ai_key" autocomplete="off" placeholder="sk-ant-…" spellcheck="false">
+    </div>
+    <div class="btn-row">
+      <button type="submit" class="btn"><?= te('ai.key_save') ?></button>
+      <?php if (ai_get_key() !== ''): ?><button type="submit" name="remove" value="1" class="btn danger" formnovalidate><?= te('ai.key_remove') ?></button><?php endif; ?>
+    </div>
+  </form>
+  <p class="hint"><?= te('ai.key_help') ?></p>
+</div>
+
 <div class="section-title" id="health"><?= te('health.title') ?></div>
 <div class="form-card">
   <p class="para"><?= te('health.intro') ?></p>

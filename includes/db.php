@@ -104,6 +104,21 @@ function varos_db(): PDO
     if (!in_array('entry_code_hash', $cols, true)) {
         $pdo->exec('ALTER TABLE settings ADD COLUMN entry_code_hash TEXT');
     }
+    if (!in_array('anthropic_key', $cols, true)) {
+        $pdo->exec('ALTER TABLE settings ADD COLUMN anthropic_key TEXT');
+    }
+    $pdo->exec('
+        CREATE TABLE IF NOT EXISTS ai_reports (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            created_at TEXT NOT NULL,
+            days INTEGER NOT NULL,
+            lang TEXT NOT NULL,
+            model TEXT NOT NULL,
+            input_tokens INTEGER NOT NULL DEFAULT 0,
+            output_tokens INTEGER NOT NULL DEFAULT 0,
+            content TEXT NOT NULL
+        )
+    ');
     if (!in_array('last_sync_at', $cols, true)) {
         $pdo->exec('ALTER TABLE settings ADD COLUMN last_sync_at TEXT');
     }

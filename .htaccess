@@ -1,0 +1,9 @@
+# Μην εξυπηρετούνται ποτέ από το web: εξαρτήσεις composer και αρχεία ρυθμίσεων/τεκμηρίωσης.
+<IfModule mod_alias.c>
+    RedirectMatch 404 "(^|/)vendor/"
+</IfModule>
+<IfModule mod_authz_core.c>
+    <FilesMatch "^(composer\.(json|lock)|README\.md|CLAUDE\.local\.md)$">
+        Require all denied
+    </FilesMatch>
+</IfModule>

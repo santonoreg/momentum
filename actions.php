@@ -141,6 +141,40 @@ switch ($action) {
         break;
     }
 
+    case 'save_ai_key': {
+        varos_require_admin($redirect);
+        if (isset($_POST['remove'])) {
+            ai_set_key(null);
+            back($redirect, 'saved');
+        }
+        $key = trim((string)($_POST['ai_key'] ?? ''));
+        // Τα κλειδιά Anthropic ξεκινούν από sk-ant- και δεν περιέχουν κενά
+        if (!preg_match('/^sk-ant-[A-Za-z0-9_-]{20,}$/', $key)) {
+            back($redirect, 'error');
+        }
+        ai_set_key($key);
+        back($redirect, 'saved');
+        break;
+    }
+
+    case 'ai_report': {
+        varos_require_admin($redirect);
+        @set_time_limit(240);
+        ignore_user_abort(true); // αν κοπεί η σύνδεση/proxy, η αναφορά ολοκληρώνεται και αποθηκεύεται
+        $days = (int)($_POST['days'] ?? 30);
+        if (!in_array($days, [7, 30, 90, 365], true)) {
+            $days = 30;
+        }
+        $res = ai_generate_report($days, varos_lang());
+        $to = 'health.php?range=' . $days;
+        if ($res['ok']) {
+            back($to, 'aidone');
+        }
+        $_SESSION['ai_error'] = $res['error'] ?? 'api';
+        back($to, 'aierror');
+        break;
+    }
+
     case 'regen_token': {
         varos_require_admin($redirect);
         varos_regenerate_token();

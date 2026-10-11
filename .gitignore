@@ -9,3 +9,6 @@ data/sessions/
 
 # Τοπικό αρχείο μνήμης για το Claude Code (δεν ανεβαίνει στο git)
 CLAUDE.local.md
+
+# Εξαρτήσεις composer (στον server: composer install --no-dev)
+vendor/

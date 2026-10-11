@@ -67,6 +67,16 @@ if (!empty($settings['last_sync_at'])) {
     }
 }
 
+// Ανάλυση με AI
+$isAdmin = varos_is_admin();
+$aiHasKey = ai_get_key() !== '';
+$aiReport = ai_latest_report($range);
+$aiErrorKey = null;
+if (($_GET['flash'] ?? '') === 'aierror' && $isAdmin) {
+    $aiErrorKey = (string)($_SESSION['ai_error'] ?? 'api');
+    unset($_SESSION['ai_error']);
+}
+
 $pageTitle = t('dash.title');
 $activeTab = 'health';
 $needsChart = true;
@@ -107,6 +117,44 @@ require __DIR__ . '/includes/header.php';
     <?php endforeach; ?>
   </div>
 <?php endif; ?>
+
+<div class="ai-card">
+  <div class="ai-head">
+    <span class="ai-spark" aria-hidden="true">✦</span>
+    <div>
+      <div class="ai-title"><?= te('ai.title') ?></div>
+      <div class="ai-sub"><?= te('ai.sub', ['model' => 'Claude Opus 5.5', 'n' => $range]) ?></div>
+    </div>
+  </div>
+
+  <?php if ($aiErrorKey !== null): ?>
+    <div class="flash error"><?= te('ai.err.' . $aiErrorKey) ?></div>
+  <?php endif; ?>
+
+  <?php if ($aiReport): ?>
+    <div class="ai-body"><?= ai_render_markdown($aiReport['content']) ?></div>
+    <div class="ai-meta"><?= te('ai.meta', [
+        'when' => fmt_date(substr($aiReport['created_at'], 0, 10)) . ' ' . substr($aiReport['created_at'], 11, 5),
+        'cost' => number_format(ai_cost_usd($aiReport), 2, '.', ''),
+    ]) ?></div>
+  <?php else: ?>
+    <p class="ai-empty"><?= te('ai.intro') ?></p>
+  <?php endif; ?>
+
+  <?php if (!$aiHasKey): ?>
+    <?php if ($isAdmin): ?><a class="btn" href="settings.php#ai"><?= te('ai.set_key') ?></a><?php endif; ?>
+  <?php elseif ($isAdmin && !ai_sdk_loaded()): ?>
+    <div class="flash error"><?= te('ai.err.no_sdk') ?></div>
+  <?php else: ?>
+    <form method="post" action="actions.php" data-busy="<?= te('ai.busy') ?>">
+      <input type="hidden" name="action" value="ai_report">
+      <input type="hidden" name="days" value="<?= (int)$range ?>">
+      <input type="hidden" name="redirect" value="health.php">
+      <button type="submit" class="btn ai-btn"><?= te($aiReport ? 'ai.btn_new' : 'ai.btn_first') ?></button>
+    </form>
+  <?php endif; ?>
+  <p class="hint"><?= te('ai.sends') ?> <?= te('ai.disclaimer') ?></p>
+</div>
 
 <?php foreach (METRIC_GROUPS as $g): if (empty($byGroup[$g])) continue; ?>
 <details class="metric-group" data-g="<?= e($g) ?>" data-key="<?= e($g) ?>" open>
