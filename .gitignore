@@ -6,3 +6,6 @@ data/*.sqlite
 # Καταγραφή συγχρονισμού
 data/sync.log
 data/sessions/
+
+# Τοπικό αρχείο μνήμης για το Claude Code (δεν ανεβαίνει στο git)
+CLAUDE.local.md
