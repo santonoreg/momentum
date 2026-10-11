@@ -107,7 +107,7 @@ fields above → *Get Contents of URL* (`POST`, JSON, `Authorization` header).
 
 ## AI analysis (optional)
 
-The **Health** tab can ask Claude (Claude Opus 5.5) for an improvement report based on your statistics.
+The **Reports** tab can ask Claude (Claude Opus 5.5) for an improvement report based on your statistics.
 It needs an Anthropic API key and the PHP SDK installed with Composer:
 
 ```bash
@@ -130,7 +130,7 @@ the code to `VAROS_LANGS` in `includes/i18n.php`. Missing keys fall back to Gree
 ## Project layout
 
 ```
-reports.php  health.php  logbook.php  settings.php  login.php  setup.php   pages
+reports.php  health.php  analysis.php  logbook.php  settings.php  login.php  setup.php   pages
 actions.php                                                       form actions
 api/health.php                                                    Apple Health endpoint
 includes/                                                         db, helpers, i18n, layout

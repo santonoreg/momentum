@@ -1,7 +1,7 @@
 <?php
 /**
  * @var string $pageTitle
- * @var string $activeTab  one of: reports, health, logbook, settings
+ * @var string $activeTab  one of: reports, health, analysis, logbook, settings
  * @var bool $needsChart   φόρτωσε Chart.js
  */
 $pageTitle = $pageTitle ?? t('app.name');

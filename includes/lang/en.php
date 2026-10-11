@@ -255,6 +255,7 @@ Low values are usually normal.
     'ai.band.concern' => 'Concerning',
     'ai.band.none' => 'No score',
     'ai.sends' => 'Only daily totals and averages are sent — not the per-minute samples or the ECG. Each report covers the last 30 days, is compared with the 30 before and takes your last two reports into account. The 0–100 score is the model\'s estimate of the period\'s habits and trends, not a medical judgement.',
+    'nav.analysis' => 'Reports',
     'btn.cancel' => 'Cancel',
     'btn.save' => 'Save',
     'btn.copy' => 'Copy',
