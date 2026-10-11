@@ -538,3 +538,35 @@ a { color: inherit; text-decoration: none; }
 .tab { position: relative; }
 .tab-dot { position: absolute; top: 6px; left: calc(50% + 7px); width: 10px; height: 10px; border-radius: 50%;
   background: #C1732E; border: 2px solid var(--surface); }
+
+/* ============ Αναφορές AI: λίστα με βαθμολογία και χρώμα ============ */
+.ai-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 0 0 10px; font-size: 11px; color: var(--ink-soft); }
+.ai-lg { display: inline-flex; align-items: center; gap: 5px; }
+.ai-lg i, .ai-score { background: var(--rc); }
+.ai-lg i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+[data-band="excellent"] { --rc: #1F6F5C; --rs: #E6F1ED; }
+[data-band="good"]      { --rc: #5E8F34; --rs: #EDF4E4; }
+[data-band="mixed"]     { --rc: #B4842A; --rs: #F9F1DE; }
+[data-band="attention"] { --rc: #C1732E; --rs: #FAEEE2; }
+[data-band="concern"]   { --rc: #A84448; --rs: #F8EAE9; }
+[data-band="none"]      { --rc: #6B7A85; --rs: #ECEFF1; }
+.ai-reports { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.ai-report { background: var(--surface); border-radius: var(--radius-md); border: 1px solid var(--line); border-left: 5px solid var(--rc); overflow: hidden; }
+.ai-report[open] { box-shadow: var(--shadow); }
+.ai-report > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: var(--rs); }
+.ai-report > summary::-webkit-details-marker { display: none; }
+.ai-report > summary::after { content: "▾"; color: var(--rc); margin-left: auto; flex: none; }
+.ai-report:not([open]) > summary::after { content: "▸"; }
+.ai-score { width: 40px; height: 40px; flex: none; border-radius: 50%; color: #fff; display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-weight: 700; font-size: 15px; }
+.ai-sum { display: flex; flex-direction: column; min-width: 0; gap: 1px; }
+.ai-line1 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.ai-date { font-weight: 600; font-size: 14px; }
+.ai-verdict { font-size: 12px; font-weight: 600; color: var(--rc); }
+.ai-delta { font-size: 11.5px; font-weight: 600; }
+.ai-delta.up { color: #1F6F5C; }
+.ai-delta.down { color: #A84448; }
+.ai-headline { font-size: 12.5px; color: var(--ink-soft); line-height: 1.35; }
+.ai-report .ai-body { border-radius: 0; margin: 0; padding: 4px 16px 8px; }
+.ai-report .ai-meta { padding: 0 16px 10px; margin: 0; }
+.ai-report .ai-h { color: var(--rc); }

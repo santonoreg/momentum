@@ -70,7 +70,7 @@ if (!empty($settings['last_sync_at'])) {
 // Ανάλυση με AI
 $isAdmin = varos_is_admin();
 $aiHasKey = ai_get_key() !== '';
-$aiReport = ai_latest_report($range);
+$aiReports = ai_all_reports();
 $aiSched = $aiHasKey ? ai_schedule() : null;
 $aiEarly = $aiSched !== null && !$aiSched['is_due'];
 $aiWhen = '';
@@ -129,7 +129,7 @@ require __DIR__ . '/includes/header.php';
     <span class="ai-spark" aria-hidden="true">✦</span>
     <div>
       <div class="ai-title"><?= te('ai.title') ?></div>
-      <div class="ai-sub"><?= te('ai.sub', ['model' => 'Claude Opus 5.5', 'n' => $range]) ?></div>
+      <div class="ai-sub"><?= te('ai.sub', ['model' => 'Claude Opus 5.5', 'n' => AI_PERIOD_DAYS]) ?></div>
     </div>
   </div>
 
@@ -137,12 +137,39 @@ require __DIR__ . '/includes/header.php';
     <div class="flash error"><?= te('ai.err.' . $aiErrorKey) ?></div>
   <?php endif; ?>
 
-  <?php if ($aiReport): ?>
-    <div class="ai-body"><?= ai_render_markdown($aiReport['content']) ?></div>
-    <div class="ai-meta"><?= te('ai.meta', [
-        'when' => fmt_date(substr($aiReport['created_at'], 0, 10)) . ' ' . substr($aiReport['created_at'], 11, 5),
-        'cost' => number_format(ai_cost_usd($aiReport), 2, '.', ''),
-    ]) ?></div>
+  <?php if ($aiReports): ?>
+    <div class="ai-legend" aria-hidden="true">
+      <?php foreach ([92 => 'excellent', 77 => 'good', 60 => 'mixed', 40 => 'attention', 10 => 'concern'] as $sc => $k): $bd = ai_score_band($sc); ?>
+        <span class="ai-lg" data-band="<?= e($bd[0]) ?>"><i></i><?= te($bd[2]) ?></span>
+      <?php endforeach; ?>
+    </div>
+    <div class="ai-reports">
+      <?php foreach ($aiReports as $i => $rep):
+        $score = $rep['score'] !== null ? (int)$rep['score'] : null;
+        $band = ai_score_band($score);
+        $older = $aiReports[$i + 1] ?? null;
+        $delta = ($score !== null && $older && $older['score'] !== null) ? $score - (int)$older['score'] : null;
+      ?>
+      <details class="ai-report" data-band="<?= e($band[0]) ?>"<?= $i === 0 ? ' open' : '' ?>>
+        <summary>
+          <span class="ai-score"><?= $score !== null ? $score : '–' ?></span>
+          <span class="ai-sum">
+            <span class="ai-line1">
+              <span class="ai-date"><?= e(fmt_date(substr($rep['created_at'], 0, 10))) ?></span>
+              <span class="ai-verdict"><?= te($band[2]) ?></span>
+              <?php if ($delta !== null && $delta !== 0): ?><span class="ai-delta <?= $delta > 0 ? 'up' : 'down' ?>"><?= $delta > 0 ? '▲ +' : '▼ −' ?><?= abs($delta) ?></span><?php endif; ?>
+            </span>
+            <?php if (!empty($rep['headline'])): ?><span class="ai-headline"><?= e($rep['headline']) ?></span><?php endif; ?>
+          </span>
+        </summary>
+        <div class="ai-body"><?= ai_render_markdown($rep['content']) ?></div>
+        <div class="ai-meta"><?= te('ai.meta', [
+            'when' => fmt_date(substr($rep['created_at'], 0, 10)) . ' ' . substr($rep['created_at'], 11, 5),
+            'cost' => number_format(ai_cost_usd($rep), 2, '.', ''),
+        ]) ?></div>
+      </details>
+      <?php endforeach; ?>
+    </div>
   <?php else: ?>
     <p class="ai-empty"><?= te('ai.intro') ?></p>
   <?php endif; ?>
@@ -164,9 +191,9 @@ require __DIR__ . '/includes/header.php';
   <?php else: ?>
     <form method="post" action="actions.php" data-busy="<?= te('ai.busy') ?>"<?= $aiEarly ? ' data-confirm="' . te('ai.early_confirm', ['when' => $aiWhen, 'period' => $aiSched['period'], 'date' => fmt_date($aiSched['due'])]) . '"' : '' ?>>
       <input type="hidden" name="action" value="ai_report">
-      <input type="hidden" name="days" value="<?= (int)$range ?>">
+      <input type="hidden" name="range" value="<?= (int)$range ?>">
       <input type="hidden" name="redirect" value="health.php">
-      <button type="submit" class="btn <?= $aiEarly ? 'secondary' : 'ai-btn' ?>"><?= te($aiReport || $aiSched ? 'ai.btn_new' : 'ai.btn_first') ?></button>
+      <button type="submit" class="btn <?= $aiEarly ? 'secondary' : 'ai-btn' ?>"><?= te($aiSched ? 'ai.btn_new' : 'ai.btn_first') ?></button>
     </form>
   <?php endif; ?>
   <p class="hint"><?= te('ai.sends') ?> <?= te('ai.disclaimer') ?></p>

@@ -161,12 +161,12 @@ switch ($action) {
         varos_require_admin($redirect);
         @set_time_limit(240);
         ignore_user_abort(true); // αν κοπεί η σύνδεση/proxy, η αναφορά ολοκληρώνεται και αποθηκεύεται
-        $days = (int)($_POST['days'] ?? 30);
-        if (!in_array($days, [7, 30, 90, 365], true)) {
-            $days = 30;
+        $range = (int)($_POST['range'] ?? 30);
+        if (!in_array($range, [7, 30, 90, 365], true)) {
+            $range = 30;
         }
-        $res = ai_generate_report($days, varos_lang());
-        $to = 'health.php?range=' . $days;
+        $res = ai_generate_report(AI_PERIOD_DAYS, varos_lang());
+        $to = 'health.php?range=' . $range;
         if ($res['ok']) {
             back($to, 'aidone');
         }

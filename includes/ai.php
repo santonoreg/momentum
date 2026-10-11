@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 const AI_MODEL = 'claude-opus-5-5';
 const AI_MAX_TOKENS = 6000;
+const AI_PERIOD_DAYS = 30;        // κάθε αναφορά καλύπτει τις τελευταίες 30 ημέρες (ανεξάρτητα από το διάστημα της σελίδας)
 const AI_DAILY_LIMIT = 3;         // ασφάλεια κόστους: μέγιστες αναφορές ανά ημέρα
 const AI_PRICE_IN = 4.0;          // $ ανά 1M tokens εισόδου (εκτίμηση για την ένδειξη κόστους)
 const AI_PRICE_OUT = 20.0;        // $ ανά 1M tokens εξόδου
@@ -206,12 +207,13 @@ function _ai_cut(string $s, int $n): string
 /** Οι τελευταίες αναφορές (για συνέχεια): ημερομηνία, διάστημα, κείμενο (κομμένο). */
 function ai_previous_reports(int $limit = 2): array
 {
-    $rows = varos_db()->query('SELECT created_at, days, content FROM ai_reports ORDER BY id DESC LIMIT ' . (int)$limit)->fetchAll(PDO::FETCH_ASSOC);
+    $rows = varos_db()->query('SELECT created_at, days, content, score FROM ai_reports ORDER BY created_at DESC, id DESC LIMIT ' . (int)$limit)->fetchAll(PDO::FETCH_ASSOC);
     $out = [];
     foreach ($rows as $r) {
         $out[] = [
             'created' => substr($r['created_at'], 0, 10),
             'period_days' => (int)$r['days'],
+            'score' => $r['score'] !== null ? (int)$r['score'] : null,
             'report' => _ai_cut((string)$r['content'], 3500),
         ];
     }
@@ -324,7 +326,10 @@ Rules:
 - Take the person's weight goal into account when it is provided.
 - Continuity: "previous_period" holds the averages of the equal-length period right before this one, and "previous_reports" holds your earlier reports (newest first, with their dates). When present, compare this period with the previous one and check what was recommended before against what the data now shows. Say plainly what improved, what got worse and what did not change. Do not repeat earlier advice word for word: if a recommendation still applies, say so briefly and make it more specific or give the next step. Never claim a recommendation was followed unless the data supports it.
 
-Format (Markdown, roughly 450-650 words), with these sections in this order:
+Return a JSON object with three fields:
+- "score": integer 0-100, an overall rating of how favourable this person's health-related habits and measured trends are during the period, judged against general healthy ranges AND their own goals (activity, sleep duration and regularity, resting heart rate and HRV trend, weight progress toward the goal, workouts, absence of worrying signals). Bands: 85-100 excellent; 70-84 good; 50-69 mixed with clear room for improvement; 30-49 needs attention; below 30 only when several concerning signals appear together. Be calibrated and base it on the data, do not inflate. With little data score conservatively and say so in the report. If previous_reports carry scores, keep your scoring consistent with them.
+- "headline": ONE plain sentence (at most 140 characters) summarising the period, for a collapsed list entry.
+- "report": the full report as Markdown, roughly 450-650 words, with these sections in this order:
 ## Progress since the last report  (ONLY when previous_reports or previous_period are provided; 3-6 short bullets)
 ## Summary  (3-4 sentences)
 ## What is going well
@@ -351,6 +356,42 @@ function ai_reports_today(): int
 }
 
 /** @return array{ok:bool,error?:string} */
+/** Σχήμα δομημένης εξόδου (structured outputs). */
+function ai_output_schema(): array
+{
+    return [
+        'type' => 'object',
+        'properties' => [
+            'score' => ['type' => 'integer', 'description' => 'Overall rating 0-100'],
+            'headline' => ['type' => 'string', 'description' => 'One sentence summary, max 140 characters'],
+            'report' => ['type' => 'string', 'description' => 'The full report in Markdown'],
+        ],
+        'required' => ['score', 'headline', 'report'],
+        'additionalProperties' => false,
+    ];
+}
+
+/** [key, χρώμα, κλειδί μετάφρασης] ανά βαθμολογία. */
+function ai_score_band(?int $score): array
+{
+    if ($score === null) {
+        return ['none', '#6B7A85', 'ai.band.none'];
+    }
+    if ($score >= 85) {
+        return ['excellent', '#1F6F5C', 'ai.band.excellent'];
+    }
+    if ($score >= 70) {
+        return ['good', '#5E8F34', 'ai.band.good'];
+    }
+    if ($score >= 50) {
+        return ['mixed', '#B4842A', 'ai.band.mixed'];
+    }
+    if ($score >= 30) {
+        return ['attention', '#C1732E', 'ai.band.attention'];
+    }
+    return ['concern', '#A84448', 'ai.band.concern'];
+}
+
 function ai_generate_report(int $days, string $lang): array
 {
     $key = ai_get_key();
@@ -374,7 +415,7 @@ function ai_generate_report(int $days, string $lang): array
             model: AI_MODEL,
             system: ai_system_prompt($lang),
             messages: [['role' => 'user', 'content' => ai_user_message($stats)]],
-            outputConfig: ['effort' => 'medium'],
+            outputConfig: ['effort' => 'medium', 'format' => ['type' => 'json_schema', 'schema' => ai_output_schema()]],
             fallbacks: 'default',
             betas: ['server-side-fallback-2026-07-01'],
         );
@@ -401,16 +442,24 @@ function ai_generate_report(int $days, string $lang): array
     if ($text === '') {
         return ['ok' => false, 'error' => 'empty'];
     }
+    $score = null;
+    $headline = null;
+    $data = json_decode($text, true);
+    if (is_array($data) && isset($data['report']) && is_string($data['report'])) {
+        $text = trim($data['report']);
+        $score = isset($data['score']) && is_numeric($data['score']) ? max(0, min(100, (int)round((float)$data['score']))) : null;
+        $headline = isset($data['headline']) && is_string($data['headline']) ? _ai_cut(trim($data['headline']), 160) : null;
+    }
     if ($resp->stopReason === 'max_tokens') {
         $text .= "\n\n_(…)_";
     }
 
     varos_db()->prepare('
-        INSERT INTO ai_reports (created_at, days, lang, model, input_tokens, output_tokens, content)
-        VALUES (:t, :d, :l, :m, :i, :o, :c)
+        INSERT INTO ai_reports (created_at, days, lang, model, input_tokens, output_tokens, content, score, headline)
+        VALUES (:t, :d, :l, :m, :i, :o, :c, :s, :h)
     ')->execute([
         ':t' => date('Y-m-d H:i:s'), ':d' => $days, ':l' => $lang, ':m' => AI_MODEL,
-        ':i' => (int)$resp->usage->inputTokens, ':o' => (int)$resp->usage->outputTokens, ':c' => $text,
+        ':i' => (int)$resp->usage->inputTokens, ':o' => (int)$resp->usage->outputTokens, ':c' => $text, ':s' => $score, ':h' => $headline,
     ]);
     return ['ok' => true];
 }
@@ -421,7 +470,7 @@ function ai_generate_report(int $days, string $lang): array
  */
 function ai_schedule(): ?array
 {
-    $r = varos_db()->query('SELECT created_at, days FROM ai_reports ORDER BY id DESC LIMIT 1')->fetch(PDO::FETCH_ASSOC);
+    $r = varos_db()->query('SELECT created_at, days FROM ai_reports ORDER BY created_at DESC, id DESC LIMIT 1')->fetch(PDO::FETCH_ASSOC);
     if (!$r) {
         return null;
     }
@@ -448,12 +497,10 @@ function ai_is_due_now(): bool
     return $v;
 }
 
-function ai_latest_report(int $days): ?array
+/** Όλες οι αναφορές, οι πιο πρόσφατες πρώτα (ανεξάρτητα από το διάστημα της σελίδας). */
+function ai_all_reports(int $limit = 60): array
 {
-    $stmt = varos_db()->prepare('SELECT * FROM ai_reports WHERE days = :d ORDER BY id DESC LIMIT 1');
-    $stmt->execute([':d' => $days]);
-    $r = $stmt->fetch(PDO::FETCH_ASSOC);
-    return $r ?: null;
+    return varos_db()->query('SELECT * FROM ai_reports ORDER BY created_at DESC, id DESC LIMIT ' . (int)$limit)->fetchAll(PDO::FETCH_ASSOC);
 }
 
 function ai_cost_usd(array $report): float

@@ -119,6 +119,13 @@ function varos_db(): PDO
             content TEXT NOT NULL
         )
     ');
+    $aiCols = array_column($pdo->query('PRAGMA table_info(ai_reports)')->fetchAll(PDO::FETCH_ASSOC), 'name');
+    if (!in_array('score', $aiCols, true)) {
+        $pdo->exec('ALTER TABLE ai_reports ADD COLUMN score INTEGER');
+    }
+    if (!in_array('headline', $aiCols, true)) {
+        $pdo->exec('ALTER TABLE ai_reports ADD COLUMN headline TEXT');
+    }
     if (!in_array('last_sync_at', $cols, true)) {
         $pdo->exec('ALTER TABLE settings ADD COLUMN last_sync_at TEXT');
     }
