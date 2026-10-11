@@ -15,9 +15,12 @@ header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 
 $GLOBALS['sync_note'] = '';
+$GLOBALS['sync_phase'] = 'start';
+$GLOBALS['sync_logged'] = false;
 
-function sync_log(int $code, array $data): void
+function sync_log(int $code, array $data, ?string $fatal = null): void
 {
+    $GLOBALS['sync_logged'] = true;
     try {
         $file = __DIR__ . '/../data/sync.log';
         $keys = [];
@@ -34,6 +37,8 @@ function sync_log(int $code, array $data): void
             'http' => $code,
             'result' => $data,
             'note' => $GLOBALS['sync_note'],
+            'phase' => $GLOBALS['sync_phase'] ?? '',
+            'fatal' => $fatal,
             'body_bytes' => (int)($GLOBALS['sync_len'] ?? 0),
             'top_keys' => $keys,
             'metrics' => is_array($json) ? array_slice(payload_metric_names($json), 0, 40) : [],
@@ -47,6 +52,21 @@ function sync_log(int $code, array $data): void
         error_log('varos sync_log: ' . $e->getMessage());
     }
 }
+
+// Αν το PHP τερματίσει με fatal error (π.χ. έλλειψη μνήμης) καταγράφουμε το σφάλμα και τη φάση που έφτασε.
+register_shutdown_function(function () {
+    $err = error_get_last();
+    if ($GLOBALS['sync_logged'] || $err === null || !in_array($err['type'], [E_ERROR, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR, E_PARSE], true)) {
+        return;
+    }
+    // Ελευθερώνουμε τα μεγάλα δεδομένα για να χωρέσει η εγγραφή του log
+    foreach (['json', 'workouts', 'metricRows', 'records', 'raw'] as $k) {
+        unset($GLOBALS[$k]);
+    }
+    unset($GLOBALS['sync_json']);
+    $msg = $err['message'] . ' @ ' . basename((string)$err['file']) . ':' . $err['line'];
+    sync_log(500, ['ok' => false, 'error' => 'fatal'], $msg);
+});
 
 function api_out(int $code, array $data): void
 {
@@ -94,6 +114,7 @@ if (preg_match('/^Bearer\s+(\S+)/i', request_header('Authorization'), $m)) {
     $given = (string)$_GET['token'];
 }
 
+$GLOBALS['sync_phase'] = 'auth';
 $expected = (string)(varos_get_settings()['api_token'] ?? '');
 if ($expected === '' || !hash_equals($expected, $given)) {
     $GLOBALS['sync_note'] = $given === '' ? 'no token received (Authorization header missing/stripped?)' : 'wrong token';
@@ -104,6 +125,7 @@ if ($raw === false || $raw === '' || strlen($raw) > 8 * 1024 * 1024) {
     $GLOBALS['sync_note'] = 'empty or too large body (limit 8 MB; use Daily aggregation and a shorter date range)';
     api_out(400, ['ok' => false, 'error' => 'Empty or too large body']);
 }
+$GLOBALS['sync_phase'] = 'decode';
 $json = json_decode($raw, true);
 $raw = null; // το ακατέργαστο σώμα δεν χρειάζεται πια — ελευθερώνουμε μνήμη
 if (!is_array($json)) {
@@ -111,6 +133,7 @@ if (!is_array($json)) {
 }
 
 $GLOBALS['sync_json'] = &$json;
+$GLOBALS['sync_phase'] = 'parse';
 $workouts = parse_health_payload($json);
 $metricRows = parse_health_metrics($json);
 $records = parse_health_records($json);
@@ -123,6 +146,7 @@ if (!$workouts && !$metricRows && !$records) {
         . ($names ? ' (metrics received: ' . implode(', ', array_slice($names, 0, 10)) . ')' : '');
 }
 
+$GLOBALS['sync_phase'] = 'store';
 $pdo = varos_db();
 $pdo->beginTransaction();
 try {
@@ -139,4 +163,5 @@ try {
     api_out(500, ['ok' => false, 'error' => 'Could not store workouts']);
 }
 
+$GLOBALS['sync_phase'] = 'done';
 api_out(200, ['ok' => true, 'imported' => count($workouts), 'metric_samples' => count($metricRows), 'records' => count($records)]);
