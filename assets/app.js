@@ -134,7 +134,16 @@
     var f = e.target;
     if (!f.getAttribute || !f.hasAttribute('data-busy') || e.defaultPrevented) return;
     var btn = f.querySelector('button[type="submit"]');
-    if (btn) { btn.textContent = f.getAttribute('data-busy'); setTimeout(function () { btn.disabled = true; }, 0); }
+    if (btn) {
+      var label = btn.textContent;
+      // Μετά το confirm (άλλος listener): αν η αποστολή ακυρώθηκε, δεν αλλάζουμε το κουμπί
+      setTimeout(function () {
+        if (e.defaultPrevented) return;
+        btn.textContent = f.getAttribute('data-busy');
+        btn.disabled = true;
+        setTimeout(function () { btn.disabled = false; btn.textContent = label; }, 120000);
+      }, 0);
+    }
   });
 
   // ---------- Επιβεβαίωση διαγραφής ----------

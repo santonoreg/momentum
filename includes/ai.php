@@ -8,7 +8,7 @@ declare(strict_types=1);
 
 const AI_MODEL = 'claude-opus-5-5';
 const AI_MAX_TOKENS = 6000;
-const AI_DAILY_LIMIT = 10;        // ασφάλεια κόστους: μέγιστες αναφορές ανά ημέρα
+const AI_DAILY_LIMIT = 3;         // ασφάλεια κόστους: μέγιστες αναφορές ανά ημέρα
 const AI_PRICE_IN = 4.0;          // $ ανά 1M tokens εισόδου (εκτίμηση για την ένδειξη κόστους)
 const AI_PRICE_OUT = 20.0;        // $ ανά 1M tokens εξόδου
 
@@ -413,6 +413,39 @@ function ai_generate_report(int $days, string $lang): array
         ':i' => (int)$resp->usage->inputTokens, ':o' => (int)$resp->usage->outputTokens, ':c' => $text,
     ]);
     return ['ok' => true];
+}
+
+/**
+ * Πότε προτείνεται η επόμενη αναφορά: όταν περάσουν τόσες ημέρες όσες καλύπτει η τελευταία (ώστε τα διαστήματα
+ * να μην επικαλύπτονται και η σύγκριση να έχει νόημα). null αν δεν υπάρχει καμία αναφορά.
+ */
+function ai_schedule(): ?array
+{
+    $r = varos_db()->query('SELECT created_at, days FROM ai_reports ORDER BY id DESC LIMIT 1')->fetch(PDO::FETCH_ASSOC);
+    if (!$r) {
+        return null;
+    }
+    $last = substr($r['created_at'], 0, 10);
+    $period = max(1, (int)$r['days']);
+    $due = date('Y-m-d', strtotime($last . ' +' . $period . ' days'));
+    $todayTs = strtotime(date('Y-m-d'));
+    $left = (int)round((strtotime($due) - $todayTs) / 86400);
+    return [
+        'last' => $last, 'period' => $period, 'due' => $due,
+        'days_left' => $left, 'is_due' => $left <= 0,
+        'age' => (int)round(($todayTs - strtotime($last)) / 86400),
+    ];
+}
+
+/** Ήρθε η ώρα για νέα αναφορά; (μόνο όταν υπάρχει κλειδί και προηγούμενη αναφορά) */
+function ai_is_due_now(): bool
+{
+    static $v = null;
+    if ($v === null) {
+        $s = ai_get_key() !== '' ? ai_schedule() : null;
+        $v = $s !== null && $s['is_due'];
+    }
+    return $v;
 }
 
 function ai_latest_report(int $days): ?array

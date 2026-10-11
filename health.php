@@ -71,6 +71,8 @@ if (!empty($settings['last_sync_at'])) {
 $isAdmin = varos_is_admin();
 $aiHasKey = ai_get_key() !== '';
 $aiReport = ai_latest_report($range);
+$aiSched = $aiHasKey ? ai_schedule() : null;
+$aiEarly = $aiSched !== null && !$aiSched['is_due'];
 $aiErrorKey = null;
 if (($_GET['flash'] ?? '') === 'aierror' && $isAdmin) {
     $aiErrorKey = (string)($_SESSION['ai_error'] ?? 'api');
@@ -141,16 +143,26 @@ require __DIR__ . '/includes/header.php';
     <p class="ai-empty"><?= te('ai.intro') ?></p>
   <?php endif; ?>
 
+  <?php if ($aiSched !== null): ?>
+    <div class="ai-next <?= $aiSched['is_due'] ? 'is-due' : '' ?>">
+      <?php if ($aiSched['is_due']): ?>
+        <?= te('ai.due_now', ['n' => $aiSched['period']]) ?>
+      <?php else: ?>
+        <?= te('ai.next', ['date' => fmt_date($aiSched['due']), 'n' => $aiSched['days_left']]) ?>
+      <?php endif; ?>
+    </div>
+  <?php endif; ?>
+
   <?php if (!$aiHasKey): ?>
     <?php if ($isAdmin): ?><a class="btn" href="settings.php#ai"><?= te('ai.set_key') ?></a><?php endif; ?>
   <?php elseif ($isAdmin && !ai_sdk_loaded()): ?>
     <div class="flash error"><?= te('ai.err.no_sdk') ?></div>
   <?php else: ?>
-    <form method="post" action="actions.php" data-busy="<?= te('ai.busy') ?>">
+    <form method="post" action="actions.php" data-busy="<?= te('ai.busy') ?>"<?= $aiEarly ? ' data-confirm="' . te('ai.early_confirm', ['age' => $aiSched['age'], 'period' => $aiSched['period'], 'date' => fmt_date($aiSched['due'])]) . '"' : '' ?>>
       <input type="hidden" name="action" value="ai_report">
       <input type="hidden" name="days" value="<?= (int)$range ?>">
       <input type="hidden" name="redirect" value="health.php">
-      <button type="submit" class="btn ai-btn"><?= te($aiReport ? 'ai.btn_new' : 'ai.btn_first') ?></button>
+      <button type="submit" class="btn <?= $aiEarly ? 'secondary' : 'ai-btn' ?>"><?= te($aiReport || $aiSched ? 'ai.btn_new' : 'ai.btn_first') ?></button>
     </form>
   <?php endif; ?>
   <p class="hint"><?= te('ai.sends') ?> <?= te('ai.disclaimer') ?></p>
