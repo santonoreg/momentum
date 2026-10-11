@@ -24,17 +24,19 @@ function metric_registry(): array
     };
     $add('activity', 'sum', ['step_count', 'active_energy', 'basal_energy_burned', 'apple_exercise_time', 'apple_stand_time',
         'apple_stand_hour', 'flights_climbed', 'walking_running_distance', 'cycling_distance', 'swimming_distance',
-        'time_in_daylight', 'push_count', 'swimming_stroke_count']);
+        'push_count', 'swimming_stroke_count']);
     $add('activity', 'avg', ['physical_effort']);
     $add('heart', 'avg', ['heart_rate', 'resting_heart_rate', 'walking_heart_rate_average', 'heart_rate_variability',
         'cardio_recovery', 'vo2_max', 'blood_oxygen_saturation', 'respiratory_rate', 'blood_pressure']);
     $add('sleep', 'sum', ['sleep_analysis']);
+    $add('sleep', 'avg', ['breathing_disturbances', 'apple_sleeping_wrist_temperature']);
     $add('body', 'avg', ['weight_body_mass', 'body_mass_index', 'body_fat_percentage', 'lean_body_mass',
-        'waist_circumference', 'body_temperature', 'apple_sleeping_wrist_temperature']);
+        'waist_circumference', 'body_temperature']);
     $add('mobility', 'avg', ['walking_speed', 'walking_step_length', 'walking_asymmetry_percentage',
         'walking_double_support_percentage', 'apple_walking_steadiness', 'stair_speed_up', 'stair_speed_down',
         'six_minute_walking_test_distance']);
     $add('environment', 'avg', ['environmental_audio_exposure', 'headphone_audio_exposure']);
+    $add('environment', 'sum', ['time_in_daylight']);
     return $r;
 }
 

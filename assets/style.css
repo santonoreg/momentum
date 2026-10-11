@@ -476,3 +476,36 @@ a { color: inherit; text-decoration: none; }
 }
 .info-pop[hidden] { display: none; }
 .info-disc { display: block; margin-top: 8px; padding-top: 7px; border-top: 1px solid rgba(255,255,255,.2); font-size: 11px; opacity: .7; }
+
+/* ============ Υγεία: χρωματιστές ομάδες ============ */
+[data-g="activity"]    { --gc: #1F6F5C; --gs: #E6F1ED; --gb: #C9E1D8; }
+[data-g="heart"]       { --gc: #A84448; --gs: #F8EAE9; --gb: #EBCBCA; }
+[data-g="sleep"]       { --gc: #3E5C8A; --gs: #E8EEF7; --gb: #CBD8EA; }
+[data-g="body"]        { --gc: #B4842A; --gs: #F9F1DE; --gb: #EBDCB4; }
+[data-g="mobility"]    { --gc: #2F7F8F; --gs: #E4F1F3; --gb: #BFDDE2; }
+[data-g="environment"] { --gc: #C1732E; --gs: #FAEEE2; --gb: #EFD3B8; }
+[data-g="other"]       { --gc: #6B7A85; --gs: #ECEFF1; --gb: #D3D9DD; }
+
+.metric-group {
+  margin-top: 16px;
+  padding: 0 12px 12px;
+  background: var(--gs);
+  border: 1px solid var(--gb);
+  border-radius: var(--radius-lg);
+}
+.metric-group:not([open]) { padding-bottom: 0; }
+.group-head {
+  list-style: none; cursor: pointer;
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 4px 12px;
+}
+.group-head::-webkit-details-marker { display: none; }
+.group-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--gc); flex: none; }
+.group-title { font-family: var(--font-display); font-weight: 700; font-size: 16px; color: var(--gc); }
+.group-count { margin-left: auto; font-size: 11.5px; color: var(--ink-soft); }
+.group-head::after { content: "▾"; color: var(--gc); font-size: 14px; margin-left: 6px; }
+.metric-group:not([open]) .group-head::after { content: "▸"; }
+.metric-group .metric-card { border-top: 3px solid var(--gc); }
+.metric-group .mc-latest { color: var(--gc); }
+.chip[data-g] { border-top: 3px solid var(--gc); }
+.chip[data-g] .chip-value { color: var(--gc); }

@@ -113,6 +113,22 @@
     }
   })();
 
+  // ---------- Ομάδες μετρικών: θυμόμαστε ποιες έχεις κλείσει ----------
+  window.varosRestoreGroups = function () {
+    var KEY = 'varos_groups_closed', closed = [];
+    try { closed = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (e) { closed = []; }
+    document.querySelectorAll('details.metric-group').forEach(function (d) {
+      var k = d.getAttribute('data-key');
+      if (closed.indexOf(k) >= 0) d.open = false;
+      d.addEventListener('toggle', function () {
+        var i = closed.indexOf(k);
+        if (d.open && i >= 0) closed.splice(i, 1);
+        if (!d.open && i < 0) closed.push(k);
+        try { localStorage.setItem(KEY, JSON.stringify(closed)); } catch (e) { /* ignore */ }
+      });
+    });
+  };
+
   // ---------- Επιβεβαίωση διαγραφής ----------
   document.addEventListener('submit', function (e) {
     if (e.target.matches('[data-confirm]')) {
@@ -162,7 +178,8 @@
     if (!el || typeof Chart === 'undefined') return null;
     var css = getComputedStyle(document.documentElement);
     var v = function (n, d) { return css.getPropertyValue(n).trim() || d; };
-    var base = { primary: v('--primary', '#1F6F5C'), rose: v('--rose', '#A84448'), gold: v('--gold', '#B4842A'), steel: v('--cat-under', '#7C93A8') };
+    var base = { primary: v('--primary', '#1F6F5C'), rose: v('--rose', '#A84448'), gold: v('--gold', '#B4842A'), steel: v('--cat-under', '#7C93A8'),
+                 indigo: '#3E5C8A', teal: '#2F7F8F', orange: '#C1732E', slate: '#6B7A85' };
     var ink = v('--ink-soft', '#52625B');
     var stage = { deep: '#3E5C8A', core: '#7C93A8', rem: '#8E6FB5', awake: '#C1732E', asleep: '#7C93A8', totalsleep: '#7C93A8', inbed: '#B9C4CF' };
     var color = base[cfg.color] || base.primary;

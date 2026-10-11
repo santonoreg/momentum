@@ -207,6 +207,11 @@ Small swings are normal. A sustained rise can accompany illness, alcohol or cycl
     'dash.stale' => 'The last sync was {when} ({h} ago). Data after that, e.g. today’s or yesterday’s steps, has not arrived and looks incomplete. Open Health Auto Export on your iPhone to sync.',
     'dash.hours' => 'hours',
     'dash.days' => 'days',
+    'dash.n_metrics' => '{n} metrics',
+    'hm.breathing_disturbances' => 'Breathing disturbances',
+    'hi.breathing_disturbances' => 'A measure of interruptions or disturbances in your breathing while you sleep, as recorded by your watch.
+Low values are usually normal.
+↑ If they are repeatedly high, worth discussing with a doctor, since it may relate to sleep apnea.',
     'btn.cancel' => 'Cancel',
     'btn.save' => 'Save',
     'btn.copy' => 'Copy',

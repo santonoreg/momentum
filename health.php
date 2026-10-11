@@ -47,7 +47,7 @@ $yesterday = date('Y-m-d', strtotime('-1 day'));
 $listLimit = 30;
 $shown = array_slice($workouts, 0, $listLimit);
 
-$groupColor = ['activity' => 'primary', 'heart' => 'rose', 'sleep' => 'steel', 'body' => 'gold', 'mobility' => 'primary', 'environment' => 'steel', 'other' => 'steel'];
+$groupColor = ['activity' => 'primary', 'heart' => 'rose', 'sleep' => 'indigo', 'body' => 'gold', 'mobility' => 'teal', 'environment' => 'orange', 'other' => 'slate'];
 $chartCfg = [];
 foreach ($cards as $c) {
     $chartCfg[] = ['id' => $c['id'], 'kind' => $c['kind'], 'color' => $groupColor[$c['group']] ?? 'primary', 'series' => $c['series']];
@@ -97,7 +97,7 @@ require __DIR__ . '/includes/header.php';
   <div class="section-title"><?= te('dash.highlights') ?></div>
   <div class="chips">
     <?php foreach ($highlights as $h): ?>
-    <div class="chip">
+    <div class="chip" data-g="<?= e($h['group']) ?>">
       <div class="chip-value"><?= e($h['latest_text']) ?></div>
       <div class="chip-label"><?= e($h['label']) ?></div>
       <?php if ($h['latest_day']): ?>
@@ -109,7 +109,12 @@ require __DIR__ . '/includes/header.php';
 <?php endif; ?>
 
 <?php foreach (METRIC_GROUPS as $g): if (empty($byGroup[$g])) continue; ?>
-  <div class="section-title"><?= e(metric_group_label($g)) ?></div>
+<details class="metric-group" data-g="<?= e($g) ?>" data-key="<?= e($g) ?>" open>
+  <summary class="group-head">
+    <span class="group-dot"></span>
+    <span class="group-title"><?= e(metric_group_label($g)) ?></span>
+    <span class="group-count"><?= te('dash.n_metrics', ['n' => count($byGroup[$g])]) ?></span>
+  </summary>
   <div class="metric-grid">
     <?php foreach ($byGroup[$g] as $c): ?>
     <div class="metric-card">
@@ -130,6 +135,7 @@ require __DIR__ . '/includes/header.php';
     </div>
     <?php endforeach; ?>
   </div>
+</details>
 <?php endforeach; ?>
 
 <?php if ($lastSync): ?>
@@ -231,6 +237,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var labels = <?= json_encode($labels, JSON_UNESCAPED_UNICODE) ?>;
   var cfgs = <?= json_encode($chartCfg, JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR) ?>;
   cfgs.forEach(function (c) { varosMetricChart(c.id, labels, c); });
+  if (window.varosRestoreGroups) varosRestoreGroups();
   var waves = <?= json_encode($recordCfg, JSON_PARTIAL_OUTPUT_ON_ERROR) ?>;
   waves.forEach(function (w) { varosWaveOnOpen(w.id, w.values); });
 <?php if ($workouts): ?>
