@@ -107,6 +107,9 @@ if (!is_array($json)) {
 $workouts = parse_health_payload($json);
 $metricRows = parse_health_metrics($json);
 $records = parse_health_records($json);
+if (($problems = metric_parse_problems()) !== '') {
+    $GLOBALS['sync_note'] = $problems;
+}
 if (!$workouts && !$metricRows && !$records) {
     $names = payload_metric_names($json);
     $GLOBALS['sync_note'] = 'authenticated, but no workouts, metrics or records found in payload'

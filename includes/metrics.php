@@ -87,8 +87,10 @@ function parse_health_metrics(mixed $json): array
     $skip = ['date', 'startdate', 'enddate', 'start', 'end', 'source', 'id', 'uuid',
         'sleepstart', 'sleepend', 'inbedstart', 'inbedend', 'name', 'units'];
     $bucket = [];
+    $GLOBALS['varos_metric_diag'] = [];
 
     foreach ($groups as [$name, $units, $points]) {
+        $diag = ['points' => count($points), 'rows' => 0, 'sample_keys' => []];
         $isSum = metric_info($name)[1] === 'sum';
         $isSleep = $name === 'sleep_analysis';
         $factor = 1.0;
@@ -101,7 +103,11 @@ function parse_health_metrics(mixed $json): array
             if (!is_array($p)) {
                 continue;
             }
-            $startRaw = hk_first($p, ['date', 'startDate', 'start']);
+            if (!$diag['sample_keys']) {
+                $diag['sample_keys'] = array_slice(array_map('strval', array_keys($p)), 0, 14);
+            }
+            // Ημερομηνία: κανονικά date/startDate/start· ο ύπνος μπορεί να έχει μόνο sleepEnd/inBedEnd κ.λπ.
+            $startRaw = hk_first($p, ['date', 'startDate', 'start', 'sleepEnd', 'inBedEnd', 'sleepStart', 'inBedStart', 'endDate', 'end']);
             $start = hk_parse_datetime($startRaw);
             if ($start === null) {
                 continue;
@@ -146,8 +152,10 @@ function parse_health_metrics(mixed $json): array
                 } else {
                     $bucket[$key] = [$name, $ts, $day, (string)$f, $v, $units];
                 }
+                $diag['rows']++;
             }
         }
+        $GLOBALS['varos_metric_diag'][$name] = $diag;
     }
     return array_values($bucket);
 }
@@ -161,6 +169,18 @@ function upsert_health_metrics(array $rows): void
     foreach ($rows as $r) {
         $stmt->execute($r);
     }
+}
+
+/** Κείμενο για το sync.log: μετρικές που ήρθαν αλλά δεν έδωσαν καμία τιμή, με τα πεδία του πρώτου δείγματος. */
+function metric_parse_problems(): string
+{
+    $out = [];
+    foreach ($GLOBALS['varos_metric_diag'] ?? [] as $name => $d) {
+        if ($d['points'] > 0 && $d['rows'] === 0) {
+            $out[] = $name . ' (' . $d['points'] . ' points, none usable; fields: ' . implode(',', $d['sample_keys']) . ')';
+        }
+    }
+    return $out ? 'UNRECOGNIZED: ' . implode('; ', $out) : '';
 }
 
 /** Ονόματα μετρικών που περιέχει το payload (για διάγνωση). */
